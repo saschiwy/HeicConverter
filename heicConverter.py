@@ -4,28 +4,40 @@ from PIL import Image, ExifTags
 from pillow_heif import register_heif_opener
 from datetime import datetime
 import piexif
-import re
+import fnmatch
 
 register_heif_opener()
 
 
+def get_file_list(dir_of_interest):
+    file_list = []
+
+    for root, dirs, files in os.walk(dir_of_interest):
+        for file in files:
+            if fnmatch.fnmatch(file.lower(), '*.heic'):
+                file_list.append([root.replace('\\', '/').replace('//', '/'), file])
+
+    return file_list
+
+
 def convert_heic_to_jpeg(dir_of_interest):
-    filenames = os.listdir(dir_of_interest)
-    filenames_matched = [re.search("\.HEIC$|\.heic$", filename) for filename in filenames]
+    heic_files = get_file_list(dir_of_interest)
 
     # Extract files of interest
-    heic_files = []
     success_files = []
-
-    for index, filename in enumerate(filenames_matched):
-        if filename:
-            heic_files.append(filenames[index])
 
     print(f'Found {len(heic_files)} files to convert in folder {dir_of_interest}')
 
     # Convert files to jpg while keeping the timestamp
-    for filename in heic_files:
-        image = Image.open(dir_of_interest + "/" + filename)
+    for root, filename in heic_files:
+
+        target_filename = os.path.splitext(filename)[0] + ".jpg"
+        target_file = root + "/" + target_filename
+        if os.path.exists(target_file):
+            print(f'File {target_filename} already exists, skip')
+            continue
+
+        image = Image.open(root + "/" + filename)
         image_exif = image.getexif()
         if image_exif:
             # Make a map with tag names and grab the datetime
@@ -41,8 +53,9 @@ def convert_heic_to_jpeg(dir_of_interest):
             exif_bytes = piexif.dump(exif_dict)
 
             # Save image as jpeg
-            image.save(dir_of_interest + "/" + os.path.splitext(filename)[0] + ".jpg", "jpeg", exif = exif_bytes)
+            image.save(target_file, "jpeg", exif = exif_bytes)
             print(f'Converted image: {filename}')
+
             success_files.append(filename)
         else:
             print(f"Unable to get exif data for {filename}")

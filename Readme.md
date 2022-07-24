@@ -7,7 +7,8 @@ or not working for me, I decided to make a simple python script to help convert 
 
 ## Features
 
-- Convert all HEIC files to jpg in a folder
+- Convert all HEIC files to jpg in a folder and sub-folders recursively
+- Skips already existing conversions
 - Keep Metadata of the original file
 
 ## Usage
