@@ -12,18 +12,40 @@ or not working for me, I decided to make a simple python script to help convert 
 - Keep Metadata of the original file
 
 ## Usage
+
 1. Copy the prepared exe to the folder with heic files for convert and double click it.
 2. Use Command line and append the path of interest:
+
 ~~~~
 ./heicConverter.exe path/to/pictures
 ~~~~
 
 3. Use command line, navigate to the path of interest and start the exe located somewhere on your machine.
 
+## Installation
+
+### Windows
+
+Download the latest release from the [Release Page](https://github.com/saschiwy/HeicConverter/releases) and extract it
+somewhere on your machine.
+
+### Linux / Mac
+
+Download the repo, install the dependencies and run the script.
+
+## Development Dependencies
+
+Install the python package dependencies with:
+
+~~~~
+pip install -r requirements.txt
+~~~~
+
 ## Remarks
+
 This software was mainly created by people at StackOverflow:
 https://stackoverflow.com/questions/54395735/how-to-work-with-heic-image-file-types-in-python
 
-
 ## Example
+
 ![Example](doc/example.png)
