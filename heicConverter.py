@@ -41,7 +41,10 @@ def convert_heic_file(source_file, target_file):
     if image_exif:
         # Make a map with tag names and grab the datetime
         exif = {ExifTags.TAGS[k]: v for k, v in image_exif.items() if k in ExifTags.TAGS and type(v) is not bytes}
-        date = datetime.strptime(exif['DateTime'], '%Y:%m:%d %H:%M:%S')
+        if 'DateTime' in exif:
+            date = datetime.strptime(exif['DateTime'], '%Y:%m:%d %H:%M:%S')
+        else:
+            date = datetime.now()
 
         # Load exif data via piexif
         exif_dict = piexif.load(image.info["exif"])
