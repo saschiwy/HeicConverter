@@ -3,3 +3,4 @@ build
 *.spec
 .idea
 tests
+venv
