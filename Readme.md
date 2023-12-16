@@ -10,8 +10,10 @@ or not working for me, I decided to make a simple python script to help convert 
 - Convert all HEIC files to jpg in a folder and sub-folders recursively
 - Skips already existing conversions
 - Keep Metadata of the original file
+- Optional: Remove source files
+- Optional: Overwrite existing files
 
-## Usage
+## Quick Usage
 
 1. Copy the prepared exe to the folder with heic files for convert and double click it.
 2. Use Command line and append the path of interest:
@@ -20,7 +22,31 @@ or not working for me, I decided to make a simple python script to help convert 
 ./heicConverter.exe path/to/pictures
 ~~~~
 
-3. Use command line, navigate to the path of interest and start the exe located somewhere on your machine.
+## Command Line
+
+Start the script (or exe) from command line for additional options:
+
+~~~~
+heicConverter.exe [-h] [-r] [-o] [--not-recursive] [--skip-prompt] path
+
+Convert HEIC files to JPEG
+
+positional arguments:
+  path             the path to the file or directory to convert
+
+options:
+  -h, --help       show this help message and exit
+  -r, --remove     Remove converted HEIC Files
+  -o, --overwrite  Overwrite existing JPEG files
+  --not-recursive  Do not search subdirectories
+  --skip-prompt    Skip the prompt at the end
+~~~~
+
+## GUI
+
+Also a GUI Version is available. Just start HeicConverterGui.exe.
+
+![GUI](doc/gui_example.png)
 
 ## Installation
 
@@ -53,6 +79,7 @@ Install the dependencies, navigate with a console to the source dir and run the 
 
 ~~~~
 python -m PyInstaller --onefile --console heicConverter.py
+python -m PyInstaller --onefile --windowed heicConverterGui.py
 ~~~~
 
 ## Remarks
