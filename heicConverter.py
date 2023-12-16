@@ -11,7 +11,7 @@ def parse_args():
     :return: the parsed arguments
     """
     parser = argparse.ArgumentParser(description='Convert HEIC files to JPEG')
-    parser.add_argument('path', help='the path to the file or directory to convert')
+    parser.add_argument('path', help='the path to the file or directory to convert', default='./', nargs='?')
     parser.add_argument('-r', '--remove', help='Remove converted HEIC Files', action='store_true')
     parser.add_argument('-o', '--overwrite', help='Overwrite existing JPEG files', action='store_true')
     parser.add_argument('--not-recursive', help='Do not search subdirectories', action='store_true')
@@ -26,6 +26,8 @@ if __name__ == '__main__':
     args = parse_args()
     if args.path:
         path = args.path
+
+    path = os.path.abspath(path)
 
     if os.path.isdir(path):
         print(f'Converting HEIC files in directory {path}')
