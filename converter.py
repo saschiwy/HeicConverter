@@ -5,7 +5,7 @@ from datetime import datetime
 import piexif
 import fnmatch
 
-register_heif_opener()
+register_heif_opener(allow_incorrect_headers=True)
 
 
 def get_file_list(dir_of_interest, recursive):
