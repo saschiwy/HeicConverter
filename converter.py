@@ -1,5 +1,5 @@
 import os
-from PIL import Image, ExifTags
+from PIL import Image, ExifTags, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 from datetime import datetime
 import piexif
@@ -19,15 +19,18 @@ def get_file_list(dir_of_interest, recursive):
     """
     file_list = []
 
-    for root, dirs, files in os.walk(dir_of_interest):
-        if not recursive:
-            dirs.clear()
+    if os.path.isdir():
+        for root, dirs, files in os.walk(dir_of_interest):
+            if not recursive:
+                dirs.clear()
 
-        for file in files:
-            if fnmatch.fnmatch(file.lower(), '*.heic'):
-                file_list.append([root.replace('\\', '/').replace('//', '/'), file])
-
-    return file_list
+            for file in files:
+                if fnmatch.fnmatch(file.lower(), '*.heic'):
+                    file_list.append([root.replace('\\', '/').replace('//', '/'), file])
+        return file_list
+    else:
+        print("Path {} is not a valid directory.".format(dir_of_interest))
+        return None
 
 
 def convert_heic_file(source_file, target_file, overwrite, remove):
@@ -42,14 +45,9 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
     :return: True if successful, False otherwise
     """
 
-    if os.path.exists(target_file):
-        if overwrite:
-            os.remove(target_file)
-        else:
-            print(f'File {target_file} already exists, skip')
-            if remove:
-                os.remove(source_file)
-            return False
+    if os.path.exists(target_file) and not overwrite:
+        print(f'File {target_file} already exists, skip')
+        return False
 
     success = False
 
@@ -75,11 +73,14 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
             # Save image as jpeg
             image.save(target_file, "jpeg", exif=exif_bytes)
             print(f'Converted image: {source_file}')
-
+            if remove:
+                os.remove(source_file)
             success = True
         else:
             print(f"Unable to get exif data for {source_file}")
-
+            
+    except UnidentifiedImageError as e:
+        print(f"{source_file} is not a valid image : {e}")
     except Exception as e:
         print(f"Unable to convert {source_file}: {e}")
 
