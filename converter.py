@@ -19,7 +19,7 @@ def get_file_list(dir_of_interest, recursive):
     """
     file_list = []
 
-    if os.path.isdir():
+    if os.path.isdir(dir_of_interest):
         for root, dirs, files in os.walk(dir_of_interest):
             if not recursive:
                 dirs.clear()
@@ -49,8 +49,6 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
         print(f'File {target_file} already exists, skip')
         return False
 
-    success = False
-
     try:
         image = Image.open(source_file)
         image_exif = image.getexif()
@@ -75,7 +73,8 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
             print(f'Converted image: {source_file}')
             if remove:
                 os.remove(source_file)
-            success = True
+
+            return True
         else:
             print(f"Unable to get exif data for {source_file}")
             
@@ -84,10 +83,7 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
     except Exception as e:
         print(f"Unable to convert {source_file}: {e}")
 
-    if success and remove:
-        os.remove(source_file)
-
-    return success
+    return False
 
 
 def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove):
