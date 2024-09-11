@@ -23,10 +23,9 @@ def get_file_list(dir_of_interest, recursive):
         for root, dirs, files in os.walk(dir_of_interest):
             if not recursive:
                 dirs.clear()
-
             for file in files:
                 if fnmatch.fnmatch(file.lower(), '*.heic'):
-                    file_list.append([root.replace('\\', '/').replace('//', '/'), file])
+                    file_list.append([os.path.normpath(root), file])
         return file_list
     else:
         print("Path {} is not a valid directory.".format(dir_of_interest))
@@ -108,9 +107,9 @@ def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove):
     for root, filename in heic_files:
 
         target_filename = os.path.splitext(filename)[0] + ".jpg"
-        target_file = root + "/" + target_filename
-
-        if convert_heic_file(f'{root}/{filename}', target_file, overwrite, remove):
+        target_file = os.path.join(root, target_filename)
+        source_file = os.path.join(root, filename)
+        if convert_heic_file(source_file, target_file, overwrite, remove):
             success_files.append(target_filename)
 
     return success_files
