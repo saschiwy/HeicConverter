@@ -4,9 +4,12 @@ from tkinter import filedialog
 from tkinter import scrolledtext
 from tkinter import ttk  # ttk for modern themed widgets
 from converter import convert_heic_to_jpeg, convert_heic_file
-from ctypes import windll
+import platform
 
-windll.shcore.SetProcessDpiAwareness(1)
+# Handle DPI awareness for Windows
+if platform.system() == "Windows":
+    import ctypes
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
 class HEICConverterGUI:
     def __init__(self, master):
