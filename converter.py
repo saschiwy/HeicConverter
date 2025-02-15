@@ -51,6 +51,12 @@ def convert_heic_file(source_file, target_file, overwrite, remove, quality):
     if quality < 1:
         quality = 1
 
+    # Check if target folder exists
+    target_folder = os.path.dirname(target_file)
+    if not os.path.exists(target_folder):
+        print(f'Creating folder {target_folder}')
+        os.makedirs(target_folder)
+
     if os.path.exists(target_file) and not overwrite:
         print(f'File {target_file} already exists, skip')
         return False
@@ -92,7 +98,7 @@ def convert_heic_file(source_file, target_file, overwrite, remove, quality):
     return False
 
 
-def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove, quality):
+def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove, quality, target):
     """
     Convert all heic files in the directory of interest to jpeg
 
@@ -101,6 +107,7 @@ def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove, quality)
     :param overwrite: overwrite existing jpeg files
     :param remove: remove converted heic files
     :param quality: quality of jpeg files
+    :param target: the target directory
 
     :return: a list of successfully converted files
     """
@@ -115,7 +122,7 @@ def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove, quality)
     for root, filename in heic_files:
 
         target_filename = os.path.splitext(filename)[0] + ".jpg"
-        target_file = os.path.join(root, target_filename)
+        target_file = os.path.join(target, target_filename)
         source_file = os.path.join(root, filename)
         if convert_heic_file(source_file, target_file, overwrite, remove, quality):
             success_files.append(target_filename)

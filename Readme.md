@@ -1,3 +1,5 @@
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JBK73YUVW7MGW&source=url)
+
 # HeicConverter
 
 ## Introduction
@@ -27,19 +29,23 @@ or not working for me, I decided to make a simple python script to help convert 
 Start the script (or exe) from command line for additional options:
 
 ~~~~
-heicConverter.exe [-h] [-r] [-o] [--not-recursive] [--skip-prompt] path
+heicConverter.exe [-h] [-r] [-o] [--not-recursive] [--skip-prompt] [-q QUALITY] [-t TARGET] [path]
 
 Convert HEIC files to JPEG
 
 positional arguments:
-  path             the path to the file or directory to convert
+  path                  the path to the file or directory to convert
 
 options:
-  -h, --help       show this help message and exit
-  -r, --remove     Remove converted HEIC Files
-  -o, --overwrite  Overwrite existing JPEG files
-  --not-recursive  Do not search subdirectories
-  --skip-prompt    Skip the prompt at the end
+  -h, --help            show this help message and exit
+  -r, --remove          Remove converted HEIC Files
+  -o, --overwrite       Overwrite existing JPEG files
+  --not-recursive       Do not search subdirectories
+  --skip-prompt         Skip the prompt at the end
+  -q QUALITY, --quality QUALITY
+                        Quality of the JPG Files, default: 95
+  -t TARGET, --target TARGET
+                        The target directory for the converted files if not given, the source directory is used
 ~~~~
 
 ## GUI
@@ -84,11 +90,13 @@ python -m PyInstaller --onefile --windowed heicConverterGui.py
 
 ## Remarks
 
-This software was mainly created by people at StackOverflow:
+The basic software was mainly created by people at StackOverflow:
 https://stackoverflow.com/questions/54395735/how-to-work-with-heic-image-file-types-in-python
 
 ## Example
 
 ![Example](doc/example.png)
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JBK73YUVW7MGW&source=url)
+## Contribution
+
+Thanks to all contributors. Feel free to fork and improve the code.

@@ -16,7 +16,10 @@ def parse_args():
     parser.add_argument('-o', '--overwrite', help='Overwrite existing JPEG files', action='store_true')
     parser.add_argument('--not-recursive', help='Do not search subdirectories', action='store_true')
     parser.add_argument('--skip-prompt', help='Skip the prompt at the end', action='store_true')
-    parser.add_argument('-q', '--quality', help='Quality of the converted HEIC Files', type=int, default=95)
+    parser.add_argument('-q', '--quality', help='Quality of the JPG Files, default: 95', type=int,
+                        default=95)
+    parser.add_argument('-t', '--target',
+                        help='The target directory for the converted files if not given, the source directory is used')
 
     return parser.parse_args()
 
@@ -30,14 +33,28 @@ if __name__ == '__main__':
 
     path = os.path.abspath(path)
 
+    if args.target:
+        target = args.target
+    elif os.path.isdir(path):
+        target = path
+    else:
+        target = os.path.dirname(path)
+
     if os.path.isdir(path):
-        print(f'Converting HEIC files in directory {path}')
-        converted = convert_heic_to_jpeg(path, not args.not_recursive, args.overwrite, args.remove, args.quality)
+        print(f'Converting HEIC files in directory {path} to {target}')
+        converted = convert_heic_to_jpeg(path,
+                                         not args.not_recursive,
+                                         args.overwrite,
+                                         args.remove,
+                                         args.quality,
+                                         target)
+
         print(f'\nSuccessfully converted {len(converted)} files')
 
     elif os.path.isfile(path):
-        print(f'Converting HEIC file {path}')
-        convert_heic_file(path, os.path.splitext(path)[0] + ".jpg", args.overwrite, args.remove, args.quality)
+        t_file = os.path.join(target, os.path.basename(path).split('.')[0]) + ".jpg"
+        print(f'Converting HEIC file {path} to {t_file}')
+        convert_heic_file(path, t_file, args.overwrite, args.remove, args.quality)
         print(f'\nSuccessfully converted file')
 
     else:
