@@ -32,7 +32,7 @@ def get_file_list(dir_of_interest, recursive):
         return None
 
 
-def convert_heic_file(source_file, target_file, overwrite, remove):
+def convert_heic_file(source_file, target_file, overwrite, remove, quality):
     """
     Convert a single heic file to jpeg
 
@@ -40,9 +40,16 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
     :param target_file: the target file
     :param overwrite: overwrite existing jpeg files
     :param remove: remove converted heic files
+    :param quality: quality of jpeg files
 
     :return: True if successful, False otherwise
     """
+
+    if quality > 100:
+        quality = 100
+
+    if quality < 1:
+        quality = 1
 
     if os.path.exists(target_file) and not overwrite:
         print(f'File {target_file} already exists, skip')
@@ -68,7 +75,7 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
             exif_bytes = piexif.dump(exif_dict)
 
             # Save image as jpeg
-            image.save(target_file, "jpeg", exif=exif_bytes)
+            image.save(target_file, "jpeg", exif=exif_bytes, quality=quality)
             print(f'Converted image: {source_file}')
             if remove:
                 os.remove(source_file)
@@ -85,7 +92,7 @@ def convert_heic_file(source_file, target_file, overwrite, remove):
     return False
 
 
-def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove):
+def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove, quality):
     """
     Convert all heic files in the directory of interest to jpeg
 
@@ -93,6 +100,7 @@ def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove):
     :param recursive: search subdirectories
     :param overwrite: overwrite existing jpeg files
     :param remove: remove converted heic files
+    :param quality: quality of jpeg files
 
     :return: a list of successfully converted files
     """
@@ -109,7 +117,7 @@ def convert_heic_to_jpeg(dir_of_interest, recursive, overwrite, remove):
         target_filename = os.path.splitext(filename)[0] + ".jpg"
         target_file = os.path.join(root, target_filename)
         source_file = os.path.join(root, filename)
-        if convert_heic_file(source_file, target_file, overwrite, remove):
+        if convert_heic_file(source_file, target_file, overwrite, remove, quality):
             success_files.append(target_filename)
 
     return success_files
