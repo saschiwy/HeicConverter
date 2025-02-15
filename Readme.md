@@ -93,6 +93,30 @@ python -m PyInstaller --onefile --windowed heicConverterGui.py
 The basic software was mainly created by people at StackOverflow:
 https://stackoverflow.com/questions/54395735/how-to-work-with-heic-image-file-types-in-python
 
+## Virus Detection
+
+Some people reported that their virus scanner detected a virus in the exe file. According to this reddit post:
+[Windows Defender found "wacapew.c! ml"](https://www.reddit.com/r/computerviruses/comments/mkrmg7/windows_defender_found_wacapewc_ml/)
+the pyinstaller
+is adding a file which can be detected as virus. I can assure you, I did not add any virus. However, I used external
+libraries and I cannot guarantee that they are free of viruses. If you are unsure, you can either create a exe yourself
+(see above) or use the python script directly.
+
+Also, very interesting is, that the console tool has a higher detection rate than the GUI tool. According to another
+reddit post, the python exe creation uses some similar signature as a
+virus. [My python program is a Trojan?](https://www.reddit.com/r/learnpython/comments/18s8y0x/my_python_program_is_a_trojan/)
+
+![VirusTotal Console](doc/vt_heic_console.png)
+
+[VirusTotal Console](https://www.virustotal.com/gui/file/747558f1795aa03a2f64385002caa8a389841ef01d0ff0cac31d93496b5e462c)
+
+![!VirusTotal GUI](doc/vt_heic_gui.png)
+[VirusTotal GUI](https://www.virustotal.com/gui/file/ffec5bfc65f77c1a9c4dbe3c23dd602b10f2f83e7bc64d3a17047cca8692c0bf)
+
+The number of detections is still very low with 3/72 and 5/72.
+
+**If you still have concerns I recommend to not use this software.**
+
 ## Example
 
 ![Example](doc/example.png)
