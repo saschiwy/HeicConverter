@@ -111,6 +111,7 @@ virus. [My python program is a Trojan?](https://www.reddit.com/r/learnpython/com
 [VirusTotal Console](https://www.virustotal.com/gui/file/747558f1795aa03a2f64385002caa8a389841ef01d0ff0cac31d93496b5e462c)
 
 ![!VirusTotal GUI](doc/vt_heic_gui.png)
+
 [VirusTotal GUI](https://www.virustotal.com/gui/file/ffec5bfc65f77c1a9c4dbe3c23dd602b10f2f83e7bc64d3a17047cca8692c0bf)
 
 The number of detections is still very low with 3/72 and 5/72.
