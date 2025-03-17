@@ -97,7 +97,10 @@ class HEICConverterGUI:
         remove = self.remove_var.get()
         overwrite = self.overwrite_var.get()
         recursive = self.recursive_var.get()
-        quality = int(self.quality_entry.get())
+        quality = self.quality_scale.get()  # Fixed: use quality_scale instead of quality_entry
+
+        # Clear previous output
+        self.console_output.delete(1.0, tk.END)
 
         # Ensure quality is within the range 1-100
         if quality > 100:
@@ -123,7 +126,6 @@ class HEICConverterGUI:
 
         self.console_output.insert(tk.END, output_text)
         self.console_output.see(tk.END)
-
 
 
 def main():
