@@ -6,6 +6,9 @@ from tkinter import ttk
 from converter import convert_heic_to_jpeg, convert_heic_file
 import platform
 import re
+import io
+import sys
+from contextlib import redirect_stdout, redirect_stderr
 
 # Handle DPI awareness for Windows
 if platform.system() == "Windows":
@@ -426,16 +429,26 @@ class HEICConverterGUI:
             os.makedirs(target)
             output_text += f"Created target directory: {target}\n"
 
+        # Add the output to the console
+        self.console_output.insert(tk.END, output_text)
+        self.console_output.see(tk.END)
+        self.master.update()  # Update the display
+
+        # Use StringIO to capture console output 
+        console_capture = io.StringIO()
+        
         # Check if we have files selected or a directory path
         if self.selected_files:
             # File(s) mode
             successful_count = 0
-            output_text += f'Converting {len(self.selected_files)} selected file(s):\n'
+            self.console_output.insert(tk.END, f'Converting {len(self.selected_files)} selected file(s):\n')
+            self.master.update()  # Update display
             
             for source_file in self.selected_files:
                 # Check if it's a valid HEIC file
                 if not os.path.isfile(source_file) or not source_file.lower().endswith('.heic'):
-                    output_text += f'Skipping invalid file: {source_file}\n'
+                    self.console_output.insert(tk.END, f'Skipping invalid file: {source_file}\n')
+                    self.master.update()
                     continue
                     
                 target_filename = os.path.basename(source_file).split('.')[0] + ".jpg"
@@ -446,27 +459,49 @@ class HEICConverterGUI:
                     target_file = self.generate_unique_filename(target_file)
                     target_filename = os.path.basename(target_file)
                 
-                output_text += f'Converting: {os.path.basename(source_file)} -> {target_filename}\n'
-                if convert_heic_file(source_file, target_file, overwrite, remove, quality):
+                self.console_output.insert(tk.END, f'Converting: {os.path.basename(source_file)} -> {target_filename}\n')
+                self.master.update()
+                
+                # Capture stdout during conversion
+                with redirect_stdout(console_capture), redirect_stderr(console_capture):
+                    success = convert_heic_file(source_file, target_file, overwrite, remove, quality)
+                
+                # Get and display any captured output
+                captured = console_capture.getvalue()
+                if captured:
+                    self.console_output.insert(tk.END, captured)
+                    self.master.update()
+                    console_capture.truncate(0)
+                    console_capture.seek(0)
+                
+                if success:
                     successful_count += 1
             
-            output_text += f'Successfully converted {successful_count} out of {len(self.selected_files)} files\n'
+            self.console_output.insert(tk.END, f'Successfully converted {successful_count} out of {len(self.selected_files)} files\n')
             self.status_var.set(f"Converted {successful_count} of {len(self.selected_files)} files")
         else:
             # Directory mode
             path = self.path_entry.get()
             if os.path.isdir(path):
-                output_text += f'Converting HEIC files in directory {path} to {target}\n'
+                self.console_output.insert(tk.END, f'Converting HEIC files in directory {path} to {target}\n')
+                self.master.update()
                 
-                # For now, we'll use the existing function
-                converted = convert_heic_to_jpeg(path, recursive, overwrite, remove, quality, target)
-                output_text += f'Successfully converted {len(converted)} files\n'
+                # Capture stdout during conversion
+                with redirect_stdout(console_capture), redirect_stderr(console_capture):
+                    converted = convert_heic_to_jpeg(path, recursive, overwrite, remove, quality, target)
+                
+                # Get and display any captured output
+                captured = console_capture.getvalue()
+                if captured:
+                    self.console_output.insert(tk.END, captured)
+                
+                self.console_output.insert(tk.END, f'Successfully converted {len(converted)} files\n')
                 self.status_var.set(f"Converted {len(converted)} files")
             else:
-                output_text += f'Invalid directory path: {path}\n'
+                self.console_output.insert(tk.END, f'Invalid directory path: {path}\n')
                 self.status_var.set("Error: Invalid directory path")
 
-        self.console_output.insert(tk.END, output_text)
+        # Make sure to see the end of the log
         self.console_output.see(tk.END)
 
 
