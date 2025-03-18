@@ -4,6 +4,8 @@
 
 ## Introduction
 
+**Note:** This is my fork of @saschiwy's [HeicConverter](https://github.com/saschiwy/HeicConverter). I added a PR to fix a bug in the Gui, but the rest of the changes seemed too big to impose. These were all vibe-coded with Claude 3.7 Sonnet, then tested locally. IWOMM, YMMV.  The rest of this readme is (mostly) that of the original.
+
 A very simple command line tool to convert *.heic files to jpg. Since the available programs for windows are either paid
 or not working for me, I decided to make a simple python script to help convert these files.
 
@@ -50,11 +52,11 @@ options:
 
 ## GUI
 
-Also a GUI Version is available. Just start HeicConverterGui.exe.
+Also a GUI Version is available. Just run `pythonw .\heicConverterGui.py` from the download directory
 
 ![GUI](doc/gui_example.png)
 
-## Installation
+## Alternative Installation of @saschiw's version:
 
 ### Windows
 
@@ -92,6 +94,8 @@ python -m PyInstaller --onefile --windowed heicConverterGui.py
 
 The basic software was mainly created by people at StackOverflow:
 https://stackoverflow.com/questions/54395735/how-to-work-with-heic-image-file-types-in-python
+
+... and see my (@oaustegard's) notes about the fork
 
 ## Virus Detection
 
