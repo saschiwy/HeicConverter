@@ -3,12 +3,18 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import scrolledtext
 from tkinter import ttk
-from converter import convert_heic_to_jpeg, convert_heic_file
 import platform
-import re
 import io
 import sys
+import subprocess
 from contextlib import redirect_stdout, redirect_stderr
+
+from converter import (
+    convert_heic_to_jpeg,
+    convert_heic_file,
+    convert_multiple_heic_files,
+    generate_unique_filename
+)
 
 # Handle DPI awareness for Windows
 if platform.system() == "Windows":
@@ -20,7 +26,7 @@ class HEICConverterGUI:
     def __init__(self, master):
         self.master = master
         master.title("HEIC to JPEG Converter")
-        master.geometry("800x600")  # More reasonable default size
+        master.geometry("800x600")
         
         # Set background color for a professional look
         self.bg_color = "#f0f0f0"
@@ -41,13 +47,14 @@ class HEICConverterGUI:
         # Options section
         self.create_options_section(main_frame)
         
-        # Convert button (centered)
+        # Buttons frame
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(pady=10, fill='x')
         
         button_container = ttk.Frame(button_frame)
         button_container.pack(anchor='center')
         
+        # Convert button
         self.convert_button = ttk.Button(
             button_container,
             text="Convert",
@@ -55,7 +62,16 @@ class HEICConverterGUI:
             style="Action.TButton",
             width=15
         )
-        self.convert_button.pack()
+        self.convert_button.pack(side=tk.LEFT, padx=5)
+        
+        # Open destination folder button
+        self.open_folder_button = ttk.Button(
+            button_container,
+            text="Open Destination",
+            command=self.open_destination_folder,
+            width=15
+        )
+        self.open_folder_button.pack(side=tk.LEFT, padx=5)
         
         # Console Output 
         log_frame = ttk.LabelFrame(main_frame, text="Conversion Log", padding="5 5 5 5")
@@ -66,7 +82,7 @@ class HEICConverterGUI:
             log_frame,
             wrap=tk.WORD,
             font=("Consolas", 10),
-            height=10,  # Fixed height to ensure visibility
+            height=10,
             borderwidth=1,
             relief="solid"
         )
@@ -79,27 +95,21 @@ class HEICConverterGUI:
 
         # Setup drag and drop if possible
         self.setup_drag_drop()
+        
+        # Initial log message
+        self.log("HEIC to JPEG Converter ready.")
+        self.log("Drag and drop HEIC files or folders here to convert them.")
 
     def create_custom_theme(self):
         """Create a custom theme for the application"""
         style = ttk.Style()
-        
-        # Configure the base theme
         style.configure("TFrame", background=self.bg_color)
         style.configure("TLabelframe", background=self.bg_color)
         style.configure("TLabelframe.Label", background=self.bg_color, font=("Helvetica", 11, "bold"))
-        
-        # Button styles
         style.configure("TButton", font=("Helvetica", 11), padding=8)
         style.configure("Action.TButton", font=("Helvetica", 12, "bold"), padding=10)
-        
-        # Label styles
         style.configure("TLabel", background=self.bg_color, font=("Helvetica", 11), padding=5)
-        
-        # Entry styles
         style.configure("TEntry", font=("Helvetica", 11), padding=8)
-        
-        # Checkbox styles
         style.configure("TCheckbutton", background=self.bg_color, font=("Helvetica", 11), padding=5)
 
     def create_paths_section(self, parent):
@@ -212,29 +222,52 @@ class HEICConverterGUI:
 
     def setup_drag_drop(self):
         """Setup drag and drop functionality"""
-        # Mark the path entry as a drop target
-        self.add_drop_target(self.path_entry)
-        
-        # Also make the main window a drop target
-        self.add_drop_target(self.master)
-        
-        # Add appropriate messages to status bar
-        self.console_output.insert(tk.END, "Drag and drop HEIC files or folders here to convert them.\n")
-        self.status_var.set("Ready - Drag and drop supported")
+        try:
+            from tkinterdnd2 import TkinterDnD, DND_FILES
+            if isinstance(self.master, TkinterDnD.Tk):
+                # Register drop targets
+                self.path_entry.drop_target_register('DND_Files')
+                self.path_entry.dnd_bind('<<Drop>>', self.on_drop_files)
+                self.master.drop_target_register('DND_Files')
+                self.master.dnd_bind('<<Drop>>', self.on_drop_files)
+                self.log("Drag and drop support enabled.")
+        except ImportError:
+            self.log("Limited drag and drop support (tkinterdnd2 not available).")
+            # Basic visual feedback without actual drag/drop functionality
+            self.path_entry.bind('<Enter>', lambda e: self.status_var.set("Drop files here"))
+            self.path_entry.bind('<Leave>', lambda e: self.status_var.set("Ready"))
 
-    def add_drop_target(self, widget):
-        """Add drop target capabilities to a widget"""
-        # Different approach based on whether we have tkinterdnd2 available
-        if hasattr(self.master, 'TkdndVersion'):
-            # Using tkinterdnd2
-            widget.drop_target_register('DND_Files')
-            widget.dnd_bind('<<Drop>>', self.on_drop_files)
-        else:
-            # Fallback for platforms without tkinterdnd2
-            widget.bind('<Drop>', self.on_drop_files)
-            # Basic visual feedback
-            widget.bind('<Enter>', lambda e: self.status_var.set("Drop files here"))
-            widget.bind('<Leave>', lambda e: self.status_var.set("Ready"))
+    def log(self, message):
+        """Add message to the log and scroll to view"""
+        self.console_output.insert(tk.END, message + "\n")
+        self.console_output.see(tk.END)
+        self.master.update_idletasks()
+
+    def update_progress(self, message):
+        """Update progress in log and status bar"""
+        self.log(message)
+        self.status_var.set(message)
+
+    def open_destination_folder(self):
+        """Open the destination folder in the system file explorer"""
+        target_path = self.target_entry.get()
+        
+        if not target_path or not os.path.exists(target_path):
+            self.log("Destination folder doesn't exist.")
+            return
+            
+        try:
+            # Open folder based on operating system
+            if platform.system() == "Windows":
+                os.startfile(target_path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", target_path])
+            else:  # Linux and other Unix-like
+                subprocess.run(["xdg-open", target_path])
+                
+            self.log(f"Opened destination folder: {target_path}")
+        except Exception as e:
+            self.log(f"Error opening folder: {str(e)}")
 
     def on_drop_files(self, event):
         """Handle files being dropped"""
@@ -255,7 +288,7 @@ class HEICConverterGUI:
             return "break"  # Prevent default handling
         except Exception as e:
             self.status_var.set(f"Error processing dropped files: {str(e)}")
-            self.console_output.insert(tk.END, f"Error: {str(e)}\n")
+            self.log(f"Error: {str(e)}")
             return "break"
 
     def process_dropped_files(self, files):
@@ -290,7 +323,7 @@ class HEICConverterGUI:
             
             self.status_var.set(f"Directory selected: {directory}")
             if len(directories) > 1:
-                self.console_output.insert(tk.END, f"Note: Multiple directories dropped. Using {directory}.\n")
+                self.log(f"Note: Multiple directories dropped. Using {directory}.")
             
             return
         
@@ -316,12 +349,12 @@ class HEICConverterGUI:
             self.recursive_check.state(['disabled'])
             
             # Log the files found
-            self.console_output.insert(tk.END, f"Added {len(valid_files)} HEIC files for conversion.\n")
+            self.log(f"Added {len(valid_files)} HEIC files for conversion.")
             return
         
         # No valid files found
         self.status_var.set("No valid HEIC files found in the dropped items")
-        self.console_output.insert(tk.END, "No valid HEIC files found in the dropped items.\n")
+        self.log("No valid HEIC files found in the dropped items.")
 
     def browse_files(self):
         """Browse for file(s)"""
@@ -372,31 +405,6 @@ class HEICConverterGUI:
             self.target_entry.insert(0, file_path)
             self.status_var.set(f"Target directory: {file_path}")
 
-    def generate_unique_filename(self, target_file):
-        """Generate a unique filename by adding (n) suffix if file exists"""
-        if not os.path.exists(target_file):
-            return target_file
-        
-        directory = os.path.dirname(target_file)
-        filename, extension = os.path.splitext(os.path.basename(target_file))
-        
-        # Check if filename already has (n) pattern
-        match = re.match(r"(.*)\((\d+)\)$", filename)
-        if match:
-            base_name = match.group(1).rstrip()
-            counter = int(match.group(2))
-        else:
-            base_name = filename
-            counter = 1
-        
-        # Find an available filename
-        while True:
-            new_filename = f"{base_name}({counter}){extension}"
-            new_path = os.path.join(directory, new_filename)
-            if not os.path.exists(new_path):
-                return new_path
-            counter += 1
-
     def convert(self):
         """Handle the conversion process"""
         target = self.target_entry.get()
@@ -404,111 +412,129 @@ class HEICConverterGUI:
         overwrite = self.overwrite_var.get()
         recursive = self.recursive_var.get()
         quality = int(self.quality_scale.get())
+        
+        # Always generate unique filenames and use verbose mode
+        generate_unique = True
+        verbose = True
 
         # Clear previous output
         self.console_output.delete(1.0, tk.END)
         self.status_var.set("Converting...")
         self.master.update()  # Update the GUI to show status change
 
-        # Ensure quality is within the range 1-100
-        quality = max(1, min(100, quality))
-
-        output_text = ""
-        
         # Show selected conversion options
-        output_text += "Conversion settings:\n"
-        output_text += f"- Quality: {quality}%\n"
-        output_text += f"- Remove originals: {'Yes' if remove else 'No'}\n"
-        output_text += f"- Overwrite existing: {'Yes' if overwrite else 'No'}\n"
+        self.log("Conversion settings:")
+        self.log(f"- Quality: {quality}%")
+        self.log(f"- Remove originals: {'Yes' if remove else 'No'}")
+        self.log(f"- Overwrite existing: {'Yes' if overwrite else 'No'}")
+        self.log(f"- Generate unique filenames: Yes")
         if not self.selected_files:
-            output_text += f"- Search subdirectories: {'Yes' if recursive else 'No'}\n"
-        output_text += "\n"
+            self.log(f"- Search subdirectories: {'Yes' if recursive else 'No'}")
+        self.log("")
         
-        # Check if target directory exists, create if needed
+        # Create target directory if it doesn't exist
         if not os.path.exists(target):
             os.makedirs(target)
-            output_text += f"Created target directory: {target}\n"
+            self.log(f"Created target directory: {target}")
 
-        # Add the output to the console
-        self.console_output.insert(tk.END, output_text)
-        self.console_output.see(tk.END)
-        self.master.update()  # Update the display
-
-        # Use StringIO to capture console output 
+        # Capture stdout/stderr during conversion
         console_capture = io.StringIO()
         
         # Check if we have files selected or a directory path
         if self.selected_files:
             # File(s) mode
-            successful_count = 0
-            self.console_output.insert(tk.END, f'Converting {len(self.selected_files)} selected file(s):\n')
-            self.master.update()  # Update display
+            self.log(f'Converting {len(self.selected_files)} selected file(s)...')
             
-            for source_file in self.selected_files:
-                # Check if it's a valid HEIC file
-                if not os.path.isfile(source_file) or not source_file.lower().endswith('.heic'):
-                    self.console_output.insert(tk.END, f'Skipping invalid file: {source_file}\n')
-                    self.master.update()
-                    continue
-                    
-                target_filename = os.path.basename(source_file).split('.')[0] + ".jpg"
-                target_file = os.path.join(target, target_filename)
-                
-                # Generate unique filename if not overwriting
-                if not overwrite and os.path.exists(target_file):
-                    target_file = self.generate_unique_filename(target_file)
-                    target_filename = os.path.basename(target_file)
-                
-                self.console_output.insert(tk.END, f'Converting: {os.path.basename(source_file)} -> {target_filename}\n')
-                self.master.update()
-                
-                # Capture stdout during conversion
-                with redirect_stdout(console_capture), redirect_stderr(console_capture):
-                    success = convert_heic_file(source_file, target_file, overwrite, remove, quality)
-                
-                # Get and display any captured output
-                captured = console_capture.getvalue()
-                if captured:
-                    self.console_output.insert(tk.END, captured)
-                    self.master.update()
-                    console_capture.truncate(0)
-                    console_capture.seek(0)
-                
-                if success:
-                    successful_count += 1
+            # Use the new convert_multiple_heic_files function
+            with redirect_stdout(console_capture), redirect_stderr(console_capture):
+                converted = convert_multiple_heic_files(
+                    self.selected_files,
+                    overwrite,
+                    remove,
+                    quality,
+                    target,
+                    self.update_progress,
+                    generate_unique,
+                    verbose
+                )
             
-            self.console_output.insert(tk.END, f'Successfully converted {successful_count} out of {len(self.selected_files)} files\n')
-            self.status_var.set(f"Converted {successful_count} of {len(self.selected_files)} files")
+            # Display any captured console output
+            captured = console_capture.getvalue()
+            if captured:
+                self.log(captured)
+                
+            self.log(f'Successfully converted {len(converted)} out of {len(self.selected_files)} files')
+            self.status_var.set(f"Converted {len(converted)} of {len(self.selected_files)} files")
+            
         else:
             # Directory mode
             path = self.path_entry.get()
             if os.path.isdir(path):
-                self.console_output.insert(tk.END, f'Converting HEIC files in directory {path} to {target}\n')
-                self.master.update()
+                self.log(f'Converting HEIC files in directory {path} to {target}')
                 
-                # Capture stdout during conversion
+                # Use the enhanced convert_heic_to_jpeg function
                 with redirect_stdout(console_capture), redirect_stderr(console_capture):
-                    converted = convert_heic_to_jpeg(path, recursive, overwrite, remove, quality, target)
+                    converted = convert_heic_to_jpeg(
+                        path,
+                        recursive,
+                        overwrite,
+                        remove,
+                        quality,
+                        target,
+                        self.update_progress,
+                        generate_unique,
+                        verbose
+                    )
                 
-                # Get and display any captured output
+                # Display any captured console output
                 captured = console_capture.getvalue()
                 if captured:
-                    self.console_output.insert(tk.END, captured)
+                    self.log(captured)
                 
-                self.console_output.insert(tk.END, f'Successfully converted {len(converted)} files\n')
+                self.log(f'Successfully converted {len(converted)} files')
                 self.status_var.set(f"Converted {len(converted)} files")
+            elif os.path.isfile(path):
+                # Single file mode
+                t_file = os.path.join(target, os.path.basename(path).split('.')[0]) + ".jpg"
+                
+                # Generate unique filename if needed
+                if generate_unique and os.path.exists(t_file) and not overwrite:
+                    t_file = generate_unique_filename(t_file)
+                    
+                self.log(f'Converting HEIC file {path} to {t_file}')
+                
+                # Use the enhanced convert_heic_file function
+                with redirect_stdout(console_capture), redirect_stderr(console_capture):
+                    success = convert_heic_file(
+                        path, 
+                        t_file, 
+                        overwrite, 
+                        remove, 
+                        quality,
+                        self.update_progress,
+                        verbose
+                    )
+                    
+                # Display any captured console output
+                captured = console_capture.getvalue()
+                if captured:
+                    self.log(captured)
+                    
+                self.log(f'Conversion {"successful" if success else "failed"}')
+                self.status_var.set(f"Conversion {'successful' if success else 'failed'}")
             else:
-                self.console_output.insert(tk.END, f'Invalid directory path: {path}\n')
-                self.status_var.set("Error: Invalid directory path")
+                self.log(f'Invalid path: {path}')
+                self.status_var.set("Error: Invalid path")
 
         # Make sure to see the end of the log
         self.console_output.see(tk.END)
 
 
 def main():
+    """Main function to start the GUI application"""
     # Try to use tkinterdnd2 for drag and drop
     try:
-        from tkinterdnd2 import TkinterDnD, DND_FILES
+        from tkinterdnd2 import TkinterDnD
         root = TkinterDnD.Tk()
         print("Using tkinterdnd2 for drag and drop support")
     except ImportError:
