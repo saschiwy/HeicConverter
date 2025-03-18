@@ -4,7 +4,7 @@
 
 ## Introduction
 
-**Note:** This is my fork of @saschiwy's [HeicConverter](https://github.com/saschiwy/HeicConverter). I added a PR to fix a bug in the Gui, but the rest of the changes seemed too big to impose. These were all vibe-coded with Claude 3.7 Sonnet, then tested locally. IWOMM, YMMV.  The rest of this readme is (mostly) that of the original.
+**Note:** This is my fork of @saschiwy's [HeicConverter](https://github.com/saschiwy/HeicConverter). I added [a PR to fix a bug in the Gui](https://github.com/saschiwy/HeicConverter/pull/23), but [the rest of the changes seemed too big](https://github.com/saschiwy/HeicConverter/compare/v0.3.0...oaustegard:HeicConverter:main) to [impose](https://github.com/saschiwy/HeicConverter/issues/24). These were all vibe-coded with Claude 3.7 Sonnet, then tested locally. IWOMM, YMMV.  The rest of this readme is (mostly) that of the original.
 
 A very simple command line tool to convert *.heic files to jpg. Since the available programs for windows are either paid
 or not working for me, I decided to make a simple python script to help convert these files.
