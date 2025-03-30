@@ -4,8 +4,6 @@
 
 ## Introduction
 
-**Note:** This is my fork of @saschiwy's [HeicConverter](https://github.com/saschiwy/HeicConverter). I added [a PR to fix a bug in the Gui](https://github.com/saschiwy/HeicConverter/pull/23), but [the rest of the changes seemed too big](https://github.com/saschiwy/HeicConverter/compare/v0.3.0...oaustegard:HeicConverter:main) to [impose](https://github.com/saschiwy/HeicConverter/issues/24). These were all vibe-coded with Claude 3.7 Sonnet, then tested locally. IWOMM, YMMV.  The rest of this readme is (mostly) that of the original.
-
 A very simple command line tool to convert *.heic files to jpg. Since the available programs for windows are either paid
 or not working for me, I decided to make a simple python script to help convert these files.
 
@@ -52,11 +50,7 @@ options:
 
 ## GUI
 
-Also a GUI Version is available. Just run `pythonw .\heicConverterGui.py` from the download directory
-
 ![GUI](doc/gui_example.png)
-
-## Alternative Installation of @saschiw's version:
 
 ### Windows
 
@@ -66,6 +60,10 @@ somewhere on your machine.
 ### Linux / Mac
 
 Download the repo, install the dependencies and run the script.
+
+~~~~
+pythonw .\heicConverterGui.py
+~~~~
 
 ## Development Dependencies
 
@@ -94,8 +92,6 @@ python -m PyInstaller --onefile --windowed heicConverterGui.py
 
 The basic software was mainly created by people at StackOverflow:
 https://stackoverflow.com/questions/54395735/how-to-work-with-heic-image-file-types-in-python
-
-... and see my (@oaustegard's) notes about the fork
 
 ## Virus Detection
 
@@ -129,3 +125,8 @@ The number of detections is still very low with 3/72 and 5/72.
 ## Contribution
 
 Thanks to all contributors. Feel free to fork and improve the code.
+
+## Donations
+Special thanks to people who donated to support the project.
+
+- @oaustegard
