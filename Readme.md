@@ -50,11 +50,7 @@ options:
 
 ## GUI
 
-Also a GUI Version is available. Just start HeicConverterGui.exe.
-
 ![GUI](doc/gui_example.png)
-
-## Installation
 
 ### Windows
 
@@ -64,6 +60,10 @@ somewhere on your machine.
 ### Linux / Mac
 
 Download the repo, install the dependencies and run the script.
+
+~~~~
+pythonw .\heicConverterGui.py
+~~~~
 
 ## Development Dependencies
 
@@ -125,3 +125,8 @@ The number of detections is still very low with 3/72 and 5/72.
 ## Contribution
 
 Thanks to all contributors. Feel free to fork and improve the code.
+
+## Donations
+Special thanks to people who donated to support the project.
+
+- @oaustegard
