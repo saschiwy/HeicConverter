@@ -118,6 +118,9 @@ def convert_heic_file(
     try:
         image = Image.open(source_file)
         image_exif = image.getexif()
+        
+        exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
+        
         if image_exif:
             # Make a map with tag names and grab the datetime
             exif = {ExifTags.TAGS[k]: v for k, v in image_exif.items() if k in ExifTags.TAGS and type(v) is not bytes}
@@ -126,30 +129,46 @@ def convert_heic_file(
             else:
                 date = datetime.now()
 
-            # Load exif data via piexif
-            exif_dict = piexif.load(image.info["exif"])
-
-            # Update exif data with orientation and datetime
-            exif_dict["0th"][piexif.ImageIFD.DateTime] = date.strftime("%Y:%m:%d %H:%M:%S")
-            exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
-            exif_bytes = piexif.dump(exif_dict)
-
-            # Save image as jpeg
-            image.save(target_file, "jpeg", exif=exif_bytes, quality=quality)
-            if verbose:
-                print(f'Converted image: {source_file} -> {target_file}')
-            if remove:
-                os.remove(source_file)
-                if verbose:
-                    print(f'Removed original: {source_file}')
-
-            # Report success if callback provided
-            if progress_callback:
-                progress_callback(f"Successfully converted {os.path.basename(source_file)}")
-
-            return True
+            # Try to load existing exif data via piexif
+            try:
+                if "exif" in image.info:
+                    exif_dict = piexif.load(image.info["exif"])
+            except:
+                # If loading fails, use our default structure
+                pass
         else:
-            print(f"Unable to get exif data for {source_file}")
+            # No EXIF data exists, use current datetime
+            date = datetime.now()
+            if verbose:
+                print(f'No EXIF data found for {source_file}, creating dummy EXIF data')
+
+        # Update exif data with orientation and datetime
+        exif_dict["0th"][piexif.ImageIFD.DateTime] = date.strftime("%Y:%m:%d %H:%M:%S")
+        exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
+        
+        # Add dummy author data to ensure EXIF is not empty
+        exif_dict["0th"][piexif.ImageIFD.Artist] = "unknown"
+        
+        # Ensure the Exif IFD exists and add a dummy entry if needed
+        if not exif_dict.get("Exif"):
+            exif_dict["Exif"] = {}
+        
+        exif_bytes = piexif.dump(exif_dict)
+
+        # Save image as jpeg
+        image.save(target_file, "jpeg", exif=exif_bytes, quality=quality)
+        if verbose:
+            print(f'Converted image: {source_file} -> {target_file}')
+        if remove:
+            os.remove(source_file)
+            if verbose:
+                print(f'Removed original: {source_file}')
+
+        # Report success if callback provided
+        if progress_callback:
+            progress_callback(f"Successfully converted {os.path.basename(source_file)}")
+
+        return True
 
     except UnidentifiedImageError as e:
         print(f"{source_file} is not a valid image: {e}")
