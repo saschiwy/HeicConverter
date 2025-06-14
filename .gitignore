@@ -5,3 +5,4 @@ build
 tests
 *venv/
 __pycache__/
+test/
