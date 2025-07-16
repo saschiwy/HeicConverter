@@ -48,6 +48,11 @@ options:
                         The target directory for the converted files if not given, the source directory is used
 ~~~~
 
+### Example
+~~~~
+heicConverter.exe --path <SOURCE/FOLDER> -t <TARGET/FOLDER>
+~~~~
+
 ## GUI
 
 ![GUI](doc/gui_example.png)
@@ -130,3 +135,4 @@ Thanks to all contributors. Feel free to fork and improve the code.
 Special thanks to people who donated to support the project.
 
 - @oaustegard
+- Max Young
