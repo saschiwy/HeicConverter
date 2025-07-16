@@ -90,7 +90,7 @@ Install the dependencies, navigate with a console to the source dir and run the 
 
 ~~~~
 python -m PyInstaller --onefile --console heicConverter.py
-python -m PyInstaller --onefile --windowed heicConverterGui.py
+python -m PyInstaller --onefile --windowed --add-data "lang:lang" heicConverterGui.py
 ~~~~
 
 ## Remarks
