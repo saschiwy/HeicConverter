@@ -158,6 +158,15 @@ class HEICConverterGUI:
         )
         self.recursive_check.pack(side='left')
 
+        # Checkbox for preserving structure
+        self.preserve_structure_var = tk.BooleanVar(value=True)
+        self.preserve_structure_check = ttk.Checkbutton(
+            buttons_frame,
+            text="Preserve subfolder structure",
+            variable=self.preserve_structure_var
+        )
+        self.preserve_structure_check.pack(side='left', padx=(20, 0))
+
         # Target path row
         target_frame = ttk.Frame(paths_frame)
         target_frame.pack(fill='x', pady=5)
@@ -413,6 +422,7 @@ class HEICConverterGUI:
         overwrite = self.overwrite_var.get()
         recursive = self.recursive_var.get()
         quality = int(self.quality_scale.get())
+        preserve_structure = self.preserve_structure_var.get()
 
         # Always generate unique filenames and use verbose mode
         generate_unique = True
@@ -431,6 +441,8 @@ class HEICConverterGUI:
         self.log(f"- Generate unique filenames: Yes")
         if not self.selected_files:
             self.log(f"- Search subdirectories: {'Yes' if recursive else 'No'}")
+        self.log(f"- Preserve structure: {'Yes' if preserve_structure else 'No'}")
+
         self.log("")
 
         # Create target directory if it doesn't exist
@@ -482,6 +494,7 @@ class HEICConverterGUI:
                         remove,
                         quality,
                         target,
+                        preserve_structure,
                         self.update_progress,
                         generate_unique,
                         verbose

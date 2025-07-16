@@ -118,9 +118,9 @@ def convert_heic_file(
     try:
         image = Image.open(source_file)
         image_exif = image.getexif()
-        
+
         exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
-        
+
         if image_exif:
             # Make a map with tag names and grab the datetime
             exif = {ExifTags.TAGS[k]: v for k, v in image_exif.items() if k in ExifTags.TAGS and type(v) is not bytes}
@@ -145,14 +145,14 @@ def convert_heic_file(
         # Update exif data with orientation and datetime
         exif_dict["0th"][piexif.ImageIFD.DateTime] = date.strftime("%Y:%m:%d %H:%M:%S")
         exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
-        
+
         # Add dummy author data to ensure EXIF is not empty
         exif_dict["0th"][piexif.ImageIFD.Artist] = "unknown"
-        
+
         # Ensure the Exif IFD exists and add a dummy entry if needed
         if not exif_dict.get("Exif"):
             exif_dict["Exif"] = {}
-        
+
         exif_bytes = piexif.dump(exif_dict)
 
         # Save image as jpeg
@@ -247,9 +247,10 @@ def convert_heic_to_jpeg(
         remove: bool,
         quality: int,
         target: str,
+        preserve_folder_structure: bool = True,
         progress_callback: Optional[Callable[[str], None]] = None,
         generate_unique: bool = False,
-        verbose: bool = False
+        verbose: bool = False,
 ) -> List[str]:
     """
     Convert all heic files in the directory of interest to jpeg
@@ -276,7 +277,16 @@ def convert_heic_to_jpeg(
 
     # Convert files to jpg while keeping the timestamp
     for root, filename in heic_files:
-        target_filename = os.path.splitext(filename)[0] + ".jpg"
+
+        dir_prefix = ''
+        if preserve_folder_structure:
+            dir_prefix = os.path.relpath(root, dir_of_interest)
+            if dir_prefix != '.':
+                os.makedirs(os.path.join(target, dir_prefix), exist_ok=True)
+            else:
+                dir_prefix = ''
+
+        target_filename = os.path.join(dir_prefix, os.path.splitext(filename)[0] + ".jpg")
         target_file = os.path.join(target, target_filename)
         source_file = os.path.join(root, filename)
 
