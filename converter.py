@@ -6,6 +6,7 @@ from datetime import datetime
 import piexif
 import fnmatch
 from typing import List, Callable, Optional, Union, Tuple
+from tqdm.auto import tqdm
 
 register_heif_opener(allow_incorrect_headers=True)
 
@@ -276,7 +277,7 @@ def convert_heic_to_jpeg(
         print(f'Found {len(heic_files)} files to convert in folder {dir_of_interest}')
 
     # Convert files to jpg while keeping the timestamp
-    for root, filename in heic_files:
+    for root, filename in tqdm(heic_files):
 
         dir_prefix = ''
         if preserve_folder_structure:
