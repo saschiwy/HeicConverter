@@ -64,10 +64,10 @@ somewhere on your machine.
 
 ### Linux / Mac
 
-Download the repo, install the dependencies and run the script.
+Download the repo, and run the script.
 
 ~~~~
-pythonw .\heicConverterGui.py
+uv run heicConverterGui.py
 ~~~~
 
 ## Development Dependencies
@@ -75,22 +75,16 @@ pythonw .\heicConverterGui.py
 Install the python package dependencies with:
 
 ~~~~
-pip install -r requirements.txt
+uv sync
 ~~~~
 
 ## Create your own executable
 
-Install pyinstaller with:
+Navigate with a console to the source dir and run the following commands:
 
 ~~~~
-pip install pyinstaller
-~~~~
-
-Install the dependencies, navigate with a console to the source dir and run the following commands:
-
-~~~~
-python -m PyInstaller --onefile --console heicConverter.py
-python -m PyInstaller --onefile --windowed heicConverterGui.py
+uv run python -m PyInstaller --onefile --console heicConverter.py
+uv run python -m PyInstaller --onefile --windowed heicConverterGui.py
 ~~~~
 
 ## Remarks
