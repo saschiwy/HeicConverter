@@ -49,5 +49,5 @@
   "invalid_path": "Ungültiger Pfad: {path}",
   "error_invalid_path": "Fehler: Ungültiger Pfad",
   "error_processing_drop": "Fehler beim Verarbeiten der abgelegten Dateien: {error}",
-  "select_language": "Sprache auswählen, neustart erforderlich"
+  "select_language": "Sprache auswählen"
 }

@@ -83,7 +83,7 @@ en = {
     "invalid_path": "Invalid path: {path}",
     "error_invalid_path": "Error: Invalid path",
     "error_processing_drop": "Error processing dropped files: {error}",
-    "select_language": "Select Language, restart to apply",
+    "select_language": "Select Language",
 }
 
 gui_settings = {
@@ -169,9 +169,9 @@ class HEICConverterGUI:
         lang_frame = ttk.Frame(parent)
         lang_frame.pack(fill='x', pady=5)
 
-        label_text = self.get_text("select_language")
-        lang_label = ttk.Label(lang_frame, text=label_text, width=len(label_text), anchor='w')
-        lang_label.pack(side='left')
+        self.label_text = self.get_text("select_language")
+        self.lang_label = ttk.Label(lang_frame, text=self.label_text, width=len(self.label_text), anchor='w')
+        self.lang_label.pack(side='left')
 
         self.language_var = tk.StringVar(value=self.settings.get("language", get_system_language()))
         self.language_selector = ttk.Combobox(
@@ -181,6 +181,62 @@ class HEICConverterGUI:
             state="readonly"
         )
         self.language_selector.pack(side='left', padx=5)
+        # Bind selection change to immediately apply language
+        self.language_selector.bind('<<ComboboxSelected>>', self.on_language_change)
+
+    def on_language_change(self, event=None):
+        """Reload language file and update visible texts immediately."""
+        new_lang = event.widget.get() if (event is not None and hasattr(event, "widget")) else self.language_var.get()
+        self.language = self.load_language(new_lang)
+        self.settings["language"] = new_lang
+
+        # Update window title and status text
+        self.master.title(self.get_text("title"))
+        self.status_var.set(self.get_text("status_ready"))
+        self.convert_button.config(text=self.get_text("convert_button"))
+        self.open_folder_button.config(text=self.get_text("open_folder_button"))
+
+        # Update paths section texts
+        if hasattr(self, "paths_frame"):
+            self.paths_frame.config(text=self.get_text("file_paths"))
+        if hasattr(self, "input_label"):
+            self.input_label.config(text=self.get_text("input_path"))
+        if hasattr(self, "select_file_button"):
+            self.select_file_button.config(text=self.get_text("select_file_button"))
+        if hasattr(self, "select_dir_button"):
+            self.select_dir_button.config(text=self.get_text("select_directory_button"))
+        if hasattr(self, "recursive_check"):
+            self.recursive_check.config(text=self.get_text("recursive"))
+        if hasattr(self, "preserve_structure_check"):
+            self.preserve_structure_check.config(text=self.get_text("preserve"))
+        if hasattr(self, "target_label"):
+            self.target_label.config(text=self.get_text("output_path"))
+        if hasattr(self, "browse_target_button"):
+            self.browse_target_button.config(text=self.get_text("browse_button"))
+
+        # Update options section texts
+        if hasattr(self, "options_frame"):
+            self.options_frame.config(text=self.get_text("conversion_options"))
+        if hasattr(self, "remove_check"):
+            self.remove_check.config(text=self.get_text("remove_converted"))
+        if hasattr(self, "overwrite_check"):
+            self.overwrite_check.config(text=self.get_text("overwrite_existing"))
+        if hasattr(self, "quality_label"):
+            self.quality_label.config(text=self.get_text("quality_label"))
+
+        # Update language selector label if present
+        if hasattr(self, "lang_label"):
+            self.lang_label.config(text=self.get_text("select_language"))
+
+        # Update log frame title if present
+        if hasattr(self, "log_frame"):
+           self.log_frame.config(text=self.get_text("conversion_log"))
+
+        # Update log frame title and initial log text
+        if hasattr(self, "console_output"):
+            self.log(self.get_text("log_initial"))
+        # Optionally save the setting immediately
+        self.save_settings()
 
     def __init__(self, master):
         self.settings = gui_settings.copy()
@@ -220,10 +276,10 @@ class HEICConverterGUI:
             width=15
         )
         self.open_folder_button.pack(side=tk.LEFT, padx=5)
-        log_frame = ttk.LabelFrame(main_frame, text=self.get_text('conversion_log'), padding="5 5 5 5")
-        log_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        self.log_frame = ttk.LabelFrame(main_frame, text=self.get_text('conversion_log'), padding="5 5 5 5")
+        self.log_frame.pack(fill='both', expand=True, padx=5, pady=5)
         self.console_output = scrolledtext.ScrolledText(
-            log_frame,
+            self.log_frame,
             wrap=tk.WORD,
             font=("Consolas", 10),
             height=10,
@@ -249,16 +305,16 @@ class HEICConverterGUI:
         style.configure("TCheckbutton", background=self.bg_color, font=("Helvetica", 11), padding=5)
 
     def create_paths_section(self, parent):
-        paths_frame = ttk.LabelFrame(parent, text=self.get_text("file_paths"), padding="10 5 10 10")
-        paths_frame.pack(fill='x', padx=5, pady=5)
-        input_frame = ttk.Frame(paths_frame)
+        self.paths_frame = ttk.LabelFrame(parent, text=self.get_text("file_paths"), padding="10 5 10 10")
+        self.paths_frame.pack(fill='x', padx=5, pady=5)
+        input_frame = ttk.Frame(self.paths_frame)
         input_frame.pack(fill='x', pady=5)
-        input_label = ttk.Label(input_frame, text=self.get_text("input_path"), width=10, anchor='w')
-        input_label.pack(side='left')
+        self.input_label = ttk.Label(input_frame, text=self.get_text("input_path"), width=10, anchor='w')
+        self.input_label.pack(side='left')
         self.path_entry = ttk.Entry(input_frame)
         self.path_entry.pack(side='left', fill='x', expand=True, padx=5)
         self.path_entry.insert(0, self.settings.get("last_input_path", ""))
-        buttons_frame = ttk.Frame(paths_frame)
+        buttons_frame = ttk.Frame(self.paths_frame)
         buttons_frame.pack(fill='x', pady=5)
         spacer = ttk.Label(buttons_frame, text="", width=10)
         spacer.pack(side='left')
@@ -288,10 +344,10 @@ class HEICConverterGUI:
             variable=self.preserve_structure_var
         )
         self.preserve_structure_check.pack(side='left', padx=(20, 0))
-        target_frame = ttk.Frame(paths_frame)
+        target_frame = ttk.Frame(self.paths_frame)
         target_frame.pack(fill='x', pady=5)
-        target_label = ttk.Label(target_frame, text=self.get_text("output_path"), width=10, anchor='w')
-        target_label.pack(side='left')
+        self.target_label = ttk.Label(target_frame, text=self.get_text("output_path"), width=10, anchor='w')
+        self.target_label.pack(side='left')
         self.target_entry = ttk.Entry(target_frame)
         self.target_entry.pack(side='left', fill='x', expand=True, padx=5)
         self.browse_target_button = ttk.Button(
@@ -303,9 +359,9 @@ class HEICConverterGUI:
         self.target_entry.insert(0, self.settings.get("last_output_path", ""))
 
     def create_options_section(self, parent):
-        options_frame = ttk.LabelFrame(parent, text=self.get_text("conversion_options"), padding="10 5 10 10")
-        options_frame.pack(fill='x', padx=5, pady=5)
-        checkbox_frame = ttk.Frame(options_frame)
+        self.options_frame = ttk.LabelFrame(parent, text=self.get_text("conversion_options"), padding="10 5 10 10")
+        self.options_frame.pack(fill='x', padx=5, pady=5)
+        checkbox_frame = ttk.Frame(self.options_frame)
         checkbox_frame.pack(fill='x', pady=5)
         self.remove_var = tk.BooleanVar(value=self.settings.get("remove_converted", False))
         self.remove_check = ttk.Checkbutton(
@@ -321,10 +377,10 @@ class HEICConverterGUI:
             variable=self.overwrite_var
         )
         self.overwrite_check.pack(side='left')
-        quality_frame = ttk.Frame(options_frame)
+        quality_frame = ttk.Frame(self.options_frame)
         quality_frame.pack(fill='x', pady=5)
-        quality_label = ttk.Label(quality_frame, text=self.get_text("quality_label"))
-        quality_label.pack(side='left')
+        self.quality_label = ttk.Label(quality_frame, text=self.get_text("quality_label"))
+        self.quality_label.pack(side='left')
         self.quality_value = tk.StringVar(value=str(self.settings.get("quality", 95)))
         quality_display = ttk.Label(quality_frame, textvariable=self.quality_value, width=3)
         quality_display.pack(side='right')

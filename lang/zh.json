@@ -49,5 +49,5 @@
   "invalid_path": "无效路径：{path}",
   "error_invalid_path": "错误：无效路径",
   "error_processing_drop": "处理拖放项目时出错：{error}",
-  "select_language": "选择语言（需要重启）"
+  "select_language": "选择语言"
 }
