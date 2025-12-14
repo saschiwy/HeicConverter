@@ -57,6 +57,24 @@ heicConverter.exe --path <SOURCE/FOLDER> -t <TARGET/FOLDER>
 
 ![GUI](doc/gui_example.png)
 
+## Installation
+
+### UV (Universal Virtualenv)
+
+Install UV (Universal Virtualenv) by running the following command in your terminal:
+
+Windows:
+
+~~~~powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+~~~~
+
+Linux / Mac:
+
+~~~~bash
+wget -qO- https://astral.sh/uv/install.sh | sh
+~~~~
+
 ### Windows
 
 Download the latest release from the [Release Page](https://github.com/saschiwy/HeicConverter/releases) and extract it
