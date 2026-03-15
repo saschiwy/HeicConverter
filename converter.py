@@ -1,6 +1,7 @@
+import io
 import os
 import re
-from PIL import Image, ExifTags, UnidentifiedImageError
+from PIL import Image, ImageCms, ExifTags, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 from datetime import datetime
 import piexif
@@ -118,6 +119,16 @@ def convert_heic_file(
 
     try:
         image = Image.open(source_file)
+
+        # Convert embedded color profile (e.g. Display P3) to sRGB
+        icc_bytes = image.info.get("icc_profile")
+        if icc_bytes:
+            src_profile = ImageCms.ImageCmsProfile(io.BytesIO(icc_bytes))
+            srgb_profile = ImageCms.createProfile("sRGB")
+            image = ImageCms.profileToProfile(image, src_profile, srgb_profile, outputMode="RGB")
+        else:
+            image = image.convert("RGB")
+
         image_exif = image.getexif()
 
         exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
