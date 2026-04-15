@@ -44,7 +44,7 @@ def generate_unique_filename(target_file: str) -> str:
 
 def get_file_list(dir_of_interest: str, recursive: bool) -> List[List[str]]:
     """
-    Get a list of all HEIC files in the directory of interest
+    Get a list of all HEIC/HEIF files in the directory of interest
 
     :param dir_of_interest: the directory to search
     :param recursive: search subdirectories
@@ -57,7 +57,8 @@ def get_file_list(dir_of_interest: str, recursive: bool) -> List[List[str]]:
             if not recursive:
                 dirs.clear()
             for file in files:
-                if fnmatch.fnmatch(file.lower(), '*.heic'):
+                # Support both .heic and .heif formats
+                if fnmatch.fnmatch(file.lower(), '*.heic') or fnmatch.fnmatch(file.lower(), '*.heif'):
                     file_list.append([os.path.normpath(root), file])
         return file_list
     else:
@@ -92,9 +93,9 @@ def convert_heic_file(
             print(f"Source file {source_file} does not exist")
         return False
 
-    if not source_file.lower().endswith('.heic'):
+    if not source_file.lower().endswith('.heic') and not source_file.lower().endswith('.heif'):
         if verbose:
-            print(f"Source file {source_file} is not a HEIC file")
+            print(f"Source file {source_file} is not a HEIC/HEIF file")
         return False
 
     # Normalize quality
@@ -213,7 +214,7 @@ def convert_multiple_heic_files(
         print(f'Processing {len(file_list)} files')
 
     for source_file in file_list:
-        if not os.path.isfile(source_file) or not source_file.lower().endswith('.heic'):
+        if not os.path.isfile(source_file) or (not source_file.lower().endswith('.heic') and not source_file.lower().endswith('.heif')):
             if verbose:
                 print(f'Skipping invalid file: {source_file}')
             continue
