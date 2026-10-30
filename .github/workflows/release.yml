@@ -1,0 +1,61 @@
+# Builds the Windows executables and creates a draft release.
+# Start it from the Actions tab ("Run workflow") and enter the tag, e.g. v0.5.0.
+# Based on the release workflow by Janis Hutz (PR #42).
+name: Draft a new release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to create for this release (e.g. v0.5.0)
+        type: string
+        required: true
+      name:
+        description: The name of the release (optional)
+        type: string
+        required: false
+
+jobs:
+  draft_release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run tests
+        run: uv run python -m unittest test_converter -v
+
+      - name: Build CLI
+        run: uv run pyinstaller --onefile --console --name heicConverter heicConverter.py
+
+      - name: Build GUI
+        run: uv run pyinstaller --onefile --windowed --name heicConverterGui --add-data "lang;lang" --collect-all tkinterdnd2 heicConverterGui.py
+
+      - name: Smoke test CLI
+        shell: bash
+        run: |
+          uv run python -c "from PIL import Image; import pillow_heif; pillow_heif.register_heif_opener(); Image.new('RGB', (64, 64), 'red').save('smoke test.v1.heic')"
+          ./dist/heicConverter.exe --path "smoke test.v1.heic" -t smoke_out --skip-prompt
+          test -f "smoke_out/smoke test.v1.jpg"
+
+      - name: Draft release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/heicConverter.exe,dist/heicConverterGui.exe"
+          draft: true
+          generateReleaseNotes: true
+          artifactErrorsFailBuild: true
+          replacesArtifacts: true
+          updateOnlyUnreleased: true
+          tag: ${{ inputs.tag }}
+          name: ${{ inputs.name }}

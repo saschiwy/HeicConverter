@@ -102,8 +102,16 @@ Navigate with a console to the source dir and run the following commands:
 
 ~~~~
 uv run python -m PyInstaller --onefile --console heicConverter.py
-uv run python -m PyInstaller --onefile --windowed heicConverterGui.py
+uv run python -m PyInstaller --onefile --windowed --add-data "lang;lang" --collect-all tkinterdnd2 heicConverterGui.py
 ~~~~
+
+`--add-data "lang;lang"` bundles the translations into the GUI. On Linux or macOS use `lang:lang`.
+
+### Release
+
+Releases are built by the GitHub Actions workflow *Draft a new release*. Start it under
+*Actions → Draft a new release → Run workflow* and enter the new tag (e.g. `v0.5.0`).
+It runs the tests, builds both Windows executables and creates a draft release, which you then review and publish.
 
 ## Remarks
 
