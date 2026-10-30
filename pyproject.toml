@@ -18,3 +18,14 @@ dependencies = [
 dev = [
     "pyinstaller>=6.16.0",
 ]
+
+[project.scripts]
+heicconverter = "heicConverter:main"
+heicconverter-gui = "heicConverterGui:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["heicConverter", "heicConverterGui", "converter"]

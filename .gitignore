@@ -5,4 +5,5 @@ build
 tests
 *venv/
 __pycache__/
+*.egg-info
 /heic_gui_settings.json
