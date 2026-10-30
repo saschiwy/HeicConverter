@@ -55,6 +55,11 @@ jobs:
           draft: true
           generateReleaseNotes: true
           artifactErrorsFailBuild: true
+          # Running again for the same tag refreshes the files of the existing draft
+          # but keeps its edited notes and name.
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
           replacesArtifacts: true
           updateOnlyUnreleased: true
           tag: ${{ inputs.tag }}
