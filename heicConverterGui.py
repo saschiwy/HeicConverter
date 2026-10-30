@@ -11,6 +11,9 @@ import json
 import subprocess
 from contextlib import redirect_stdout, redirect_stderr
 
+# Language files live next to this script, or inside the bundle when built with PyInstaller
+LANG_DIR = os.path.join(getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__))), "lang")
+
 from converter import (
     convert_heic_to_jpeg,
     convert_heic_file,
@@ -103,7 +106,7 @@ class HEICConverterGUI:
     @staticmethod
     def load_language(lang_code):
         try:
-            with open(os.path.join("lang", f"{lang_code}.json"), "r", encoding="utf-8") as f:
+            with open(os.path.join(LANG_DIR, f"{lang_code}.json"), "r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
             if lang_code != "en":
@@ -112,7 +115,7 @@ class HEICConverterGUI:
 
     @staticmethod
     def get_supported_languages():
-        lang_dir = os.path.join("lang")
+        lang_dir = LANG_DIR
         if not os.path.exists(lang_dir):
             return ["en"]
         languages = ["en"]

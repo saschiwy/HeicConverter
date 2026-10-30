@@ -1,6 +1,6 @@
 [project]
 name = "heicconverter"
-version = "0.1.0"
+version = "0.5.0"
 description = " A very simple command line tool to convert heic files to jpg"
 readme = "Readme.md"
 license = "MIT"
