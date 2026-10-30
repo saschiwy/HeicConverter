@@ -42,6 +42,17 @@ def generate_unique_filename(target_file: str) -> str:
         counter += 1
 
 
+def get_target_filename(source_file: str) -> str:
+    """
+    Build the JPEG filename for a HEIC file. Only the extension is replaced,
+    so dots inside the name are kept ("dr. no.heic" -> "dr. no.jpg").
+
+    :param source_file: path or name of the source file
+    :return: the target filename without directory
+    """
+    return os.path.splitext(os.path.basename(source_file))[0] + ".jpg"
+
+
 def get_file_list(dir_of_interest: str, recursive: bool) -> List[List[str]]:
     """
     Get a list of all HEIC files in the directory of interest
@@ -218,7 +229,7 @@ def convert_multiple_heic_files(
                 print(f'Skipping invalid file: {source_file}')
             continue
 
-        target_filename = os.path.basename(source_file).split('.')[0] + ".jpg"
+        target_filename = get_target_filename(source_file)
         target_file = os.path.join(target, target_filename)
 
         # Generate unique filename if requested and not overwriting
@@ -287,7 +298,7 @@ def convert_heic_to_jpeg(
             else:
                 dir_prefix = ''
 
-        target_filename = os.path.join(dir_prefix, os.path.splitext(filename)[0] + ".jpg")
+        target_filename = os.path.join(dir_prefix, get_target_filename(filename))
         target_file = os.path.join(target, target_filename)
         source_file = os.path.join(root, filename)
 

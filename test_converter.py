@@ -13,7 +13,8 @@ from converter import (
     get_file_list,
     convert_heic_file,
     convert_heic_to_jpeg,
-    convert_multiple_heic_files
+    convert_multiple_heic_files,
+    get_target_filename
 )
 
 
@@ -72,6 +73,26 @@ class TestConverter(unittest.TestCase):
 
         pattern_unique = generate_unique_filename(pattern_file)
         self.assertEqual(os.path.basename(pattern_unique), "example(6).jpg")
+
+    def test_get_target_filename(self):
+        """Dots in the filename are kept, only the extension is replaced (issue #29)"""
+        self.assertEqual(get_target_filename("photo.heic"), "photo.jpg")
+        self.assertEqual(get_target_filename("dr. no.heic"), "dr. no.jpg")
+        self.assertEqual(get_target_filename("IMG.2024.01.01.HEIC"), "IMG.2024.01.01.jpg")
+        self.assertEqual(get_target_filename(os.path.join("some.dir", "a.b.heic")), "a.b.jpg")
+
+    @patch('converter.convert_heic_file')
+    def test_convert_multiple_keeps_dots_in_filename(self, mock_convert):
+        """Batch conversion keeps dots in the target filename (issue #29)"""
+        mock_convert.return_value = True
+        dotted = os.path.join(self.test_dir, "dr. no.heic")
+        with open(dotted, 'w') as f:
+            f.write("dummy")
+
+        result = convert_multiple_heic_files([dotted], True, False, 95, self.target_dir)
+
+        self.assertEqual(result, ["dr. no.jpg"])
+        self.assertEqual(mock_convert.call_args[0][1], os.path.join(self.target_dir, "dr. no.jpg"))
 
     def test_get_file_list(self):
         """Test the file list retrieval function"""

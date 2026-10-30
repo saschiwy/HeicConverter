@@ -15,7 +15,8 @@ from converter import (
     convert_heic_to_jpeg,
     convert_heic_file,
     convert_multiple_heic_files,
-    generate_unique_filename
+    generate_unique_filename,
+    get_target_filename
 )
 
 # Handle DPI awareness for Windows
@@ -593,7 +594,7 @@ class HEICConverterGUI:
                 self.log(self.get_text("successfully_converted").format(converted=len(converted), total=len(converted)))
                 self.status_var.set(self.get_text("converted_files").format(count=len(converted)))
             elif os.path.isfile(path):
-                t_file = os.path.join(target, os.path.basename(path).split('.')[0]) + ".jpg"
+                t_file = os.path.join(target, get_target_filename(path))
                 if generate_unique and os.path.exists(t_file) and not overwrite:
                     t_file = generate_unique_filename(t_file)
                 self.log(self.get_text("converting_file").format(path=path, target_file=t_file))
