@@ -19,7 +19,8 @@ from converter import (
     convert_heic_file,
     convert_multiple_heic_files,
     generate_unique_filename,
-    get_target_filename
+    get_target_filename,
+    is_supported_file
 )
 
 # Handle DPI awareness for Windows
@@ -458,7 +459,7 @@ class HEICConverterGUI:
             file_path = file_path.strip('"\'')
 
             if os.path.isfile(file_path):
-                if file_path.lower().endswith('.heic'):
+                if is_supported_file(file_path):
                     valid_files.append(file_path)
             elif os.path.isdir(file_path):
                 directories.append(file_path)
@@ -495,7 +496,7 @@ class HEICConverterGUI:
         self.log(self.get_text("no_valid_files"))
 
     def browse_files(self):
-        filetypes = [("HEIC files", "*.heic"), ("All files", "*.*")]
+        filetypes = [("HEIC/HEIF files", "*.heic *.heif"), ("All files", "*.*")]
         files = filedialog.askopenfilenames(filetypes=filetypes)
         if files:
             self.selected_files = files

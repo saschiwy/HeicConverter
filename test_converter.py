@@ -14,7 +14,8 @@ from converter import (
     convert_heic_file,
     convert_heic_to_jpeg,
     convert_multiple_heic_files,
-    get_target_filename
+    get_target_filename,
+    is_supported_file
 )
 
 
@@ -116,6 +117,22 @@ class TestConverter(unittest.TestCase):
         # Test with invalid directory
         invalid_files = get_file_list(os.path.join(self.test_dir, "nonexistent"), True)
         self.assertEqual(len(invalid_files), 0)
+
+    def test_get_file_list_heif(self):
+        """HEIF files and upper-case extensions are found, other files are not"""
+        for name in ("photo.heif", "PHOTO2.HEIC", "notes.txt", "image.jpg"):
+            with open(os.path.join(self.test_dir, name), 'w') as f:
+                f.write("dummy")
+
+        names = sorted(f for _, f in get_file_list(self.test_dir, False))
+        self.assertEqual(names, ["PHOTO2.HEIC", "photo.heif"])
+
+    def test_is_supported_file(self):
+        """Only HEIC and HEIF extensions are accepted"""
+        for name in ("a.heic", "a.HEIC", "a.heif", "a.HeIf", "dr. no.heif"):
+            self.assertTrue(is_supported_file(name), name)
+        for name in ("a.jpg", "a.heic.jpg", "heic", "a.hei"):
+            self.assertFalse(is_supported_file(name), name)
 
     @patch('converter.Image.open')
     @patch('converter.piexif.load')

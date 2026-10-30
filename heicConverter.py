@@ -18,12 +18,12 @@ def parse_args():
 
     :return: the parsed arguments
     """
-    parser = argparse.ArgumentParser(description='Convert HEIC files to JPEG')
+    parser = argparse.ArgumentParser(description='Convert HEIC/HEIF files to JPEG')
 
     # Input selection options (mutually exclusive)
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument('--path', help='Path to directory or file to convert')
-    input_group.add_argument('--files', nargs='+', help='List of specific HEIC files to convert')
+    input_group.add_argument('--files', nargs='+', help='List of specific HEIC/HEIF files to convert')
 
     # Conversion options
     parser.add_argument('-r', '--remove', help='Remove converted HEIC Files', action='store_true')

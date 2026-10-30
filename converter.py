@@ -5,11 +5,23 @@ from PIL import Image, ImageCms, ExifTags, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 from datetime import datetime
 import piexif
-import fnmatch
 from typing import List, Callable, Optional, Union, Tuple
 from tqdm.auto import tqdm
 
 register_heif_opener(allow_incorrect_headers=True)
+
+# File extensions the converter accepts (compared in lower case)
+SUPPORTED_EXTENSIONS = ('.heic', '.heif')
+
+
+def is_supported_file(path: str) -> bool:
+    """
+    Check if a file has a HEIC or HEIF extension
+
+    :param path: file path or name
+    :return: True if the file can be converted
+    """
+    return path.lower().endswith(SUPPORTED_EXTENSIONS)
 
 
 def generate_unique_filename(target_file: str) -> str:
@@ -56,7 +68,7 @@ def get_target_filename(source_file: str) -> str:
 
 def get_file_list(dir_of_interest: str, recursive: bool) -> List[List[str]]:
     """
-    Get a list of all HEIC files in the directory of interest
+    Get a list of all HEIC/HEIF files in the directory of interest
 
     :param dir_of_interest: the directory to search
     :param recursive: search subdirectories
@@ -69,7 +81,7 @@ def get_file_list(dir_of_interest: str, recursive: bool) -> List[List[str]]:
             if not recursive:
                 dirs.clear()
             for file in files:
-                if fnmatch.fnmatch(file.lower(), '*.heic'):
+                if is_supported_file(file):
                     file_list.append([os.path.normpath(root), file])
         return file_list
     else:
@@ -104,9 +116,9 @@ def convert_heic_file(
             print(f"Source file {source_file} does not exist")
         return False
 
-    if not source_file.lower().endswith('.heic'):
+    if not is_supported_file(source_file):
         if verbose:
-            print(f"Source file {source_file} is not a HEIC file")
+            print(f"Source file {source_file} is not a HEIC/HEIF file")
         return False
 
     # Normalize quality
@@ -236,7 +248,7 @@ def convert_multiple_heic_files(
         print(f'Processing {len(file_list)} files')
 
     for source_file in file_list:
-        if not os.path.isfile(source_file) or not source_file.lower().endswith('.heic'):
+        if not os.path.isfile(source_file) or not is_supported_file(source_file):
             if verbose:
                 print(f'Skipping invalid file: {source_file}')
             continue
