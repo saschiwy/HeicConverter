@@ -127,6 +127,7 @@ class TestConverter(unittest.TestCase):
         mock_exif = MagicMock()
         mock_exif.items.return_value = [[274, 1]]  # Orientation tag
         mock_image.getexif.return_value = mock_exif
+        mock_image.convert.return_value = mock_image
         mock_image.info = {"exif": b"fake_exif"}
         mock_open.return_value = mock_image
 

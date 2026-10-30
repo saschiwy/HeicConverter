@@ -131,15 +131,6 @@ def convert_heic_file(
     try:
         image = Image.open(source_file)
 
-        # Convert embedded color profile (e.g. Display P3) to sRGB
-        icc_bytes = image.info.get("icc_profile")
-        if icc_bytes:
-            src_profile = ImageCms.ImageCmsProfile(io.BytesIO(icc_bytes))
-            srgb_profile = ImageCms.createProfile("sRGB")
-            image = ImageCms.profileToProfile(image, src_profile, srgb_profile, outputMode="RGB")
-        else:
-            image = image.convert("RGB")
-
         image_exif = image.getexif()
 
         exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}}
@@ -164,6 +155,16 @@ def convert_heic_file(
             date = datetime.now()
             if verbose:
                 print(f'No EXIF data found for {source_file}, creating dummy EXIF data')
+
+        # Convert embedded color profile (e.g. Display P3) to sRGB.
+        # Done after reading EXIF, because the converted image has no EXIF data.
+        icc_bytes = image.info.get("icc_profile")
+        if icc_bytes:
+            src_profile = ImageCms.ImageCmsProfile(io.BytesIO(icc_bytes))
+            srgb_profile = ImageCms.createProfile("sRGB")
+            image = ImageCms.profileToProfile(image, src_profile, srgb_profile, outputMode="RGB")
+        else:
+            image = image.convert("RGB")
 
         # Update exif data with orientation and datetime
         exif_dict["0th"][piexif.ImageIFD.DateTime] = date.strftime("%Y:%m:%d %H:%M:%S")
