@@ -9,6 +9,8 @@ import io
 import sys
 import json
 import subprocess
+import threading
+import queue
 from contextlib import redirect_stdout, redirect_stderr
 
 # Language files live next to this script, or inside the bundle when built with PyInstaller
@@ -256,6 +258,10 @@ class HEICConverterGUI:
         self.bg_color = "#f0f0f0"
         master.configure(bg=self.bg_color)
         self.selected_files = []
+        # Background conversion: the worker thread sends UI updates through this queue
+        self.ui_queue = queue.Queue()
+        self.conversion_thread = None
+        self.master.after(100, self._process_ui_queue)
         self.create_custom_theme()
         main_frame = ttk.Frame(master, padding="10 10 10 10")
         main_frame.pack(fill='both', expand=True)
@@ -418,10 +424,6 @@ class HEICConverterGUI:
         self.console_output.see(tk.END)
         self.master.update_idletasks()
 
-    def update_progress(self, message):
-        self.log(message)
-        self.status_var.set(message)
-
     def open_destination_folder(self):
         target_path = self.target_entry.get()
         if not target_path or not os.path.exists(target_path):
@@ -533,52 +535,99 @@ class HEICConverterGUI:
             self.status_var.set(self.get_text("target_directory").format(path=file_path))
 
     def convert(self):
-        target = self.target_entry.get()
-        remove = self.remove_var.get()
-        overwrite = self.overwrite_var.get()
-        recursive = self.recursive_var.get()
-        quality = int(self.quality_scale.get())
-        preserve_structure = self.preserve_structure_var.get()
-        generate_unique = True
-        verbose = True
+        """Read the settings and start the conversion in a background thread, so the window stays responsive."""
+        if self.conversion_thread is not None and self.conversion_thread.is_alive():
+            return
+
+        settings = {
+            "target": self.target_entry.get(),
+            "remove": self.remove_var.get(),
+            "overwrite": self.overwrite_var.get(),
+            "recursive": self.recursive_var.get(),
+            "quality": int(self.quality_scale.get()),
+            "preserve_structure": self.preserve_structure_var.get(),
+            "generate_unique": True,
+            "verbose": True,
+            "selected_files": list(self.selected_files),
+            "path": self.path_entry.get(),
+        }
         self.console_output.delete(1.0, tk.END)
         self.status_var.set(self.get_text("converting"))
-        self.master.update()
         self.log(self.get_text("conversion_settings"))
-        self.log(self.get_text("quality_percent").format(quality=quality))
-        self.log(self.get_text("remove_originals").format(value="Yes" if remove else "No"))
-        self.log(self.get_text("overwrite_existing_option").format(value="Yes" if overwrite else "No"))
+        self.log(self.get_text("quality_percent").format(quality=settings["quality"]))
+        self.log(self.get_text("remove_originals").format(value="Yes" if settings["remove"] else "No"))
+        self.log(self.get_text("overwrite_existing_option").format(value="Yes" if settings["overwrite"] else "No"))
         self.log(self.get_text("generate_unique_filenames"))
-        if not self.selected_files:
-            self.log(self.get_text("search_subdirectories").format(value="Yes" if recursive else "No"))
-        self.log(self.get_text("preserve_structure_option").format(value="Yes" if preserve_structure else "No"))
+        if not settings["selected_files"]:
+            self.log(self.get_text("search_subdirectories").format(value="Yes" if settings["recursive"] else "No"))
+        self.log(self.get_text("preserve_structure_option").format(value="Yes" if settings["preserve_structure"] else "No"))
         self.log("")
-        if not os.path.exists(target):
-            os.makedirs(target)
-            self.log(self.get_text("created_target_directory").format(path=target))
+
+        self.convert_button.state(['disabled'])
+        self.conversion_thread = threading.Thread(target=self._run_conversion, args=(settings,), daemon=True)
+        self.conversion_thread.start()
+
+    def _post(self, kind, message=None):
+        """Send a UI update from the worker thread. Tkinter may only be used from the main thread."""
+        self.ui_queue.put((kind, message))
+
+    def _process_ui_queue(self):
+        """Apply UI updates from the worker thread. Runs in the main thread."""
+        try:
+            while True:
+                kind, message = self.ui_queue.get_nowait()
+                if kind == "log":
+                    self.log(message)
+                elif kind == "status":
+                    self.status_var.set(message)
+                elif kind == "done":
+                    self.convert_button.state(['!disabled'])
+                    self.console_output.see(tk.END)
+        except queue.Empty:
+            pass
+        self.master.after(100, self._process_ui_queue)
+
+    def _worker_progress(self, message):
+        self._post("log", message)
+        self._post("status", message)
+
+    def _run_conversion(self, settings):
+        """Run the conversion. Runs in a background thread and talks to the UI only via _post()."""
+        target = settings["target"]
+        remove = settings["remove"]
+        overwrite = settings["overwrite"]
+        recursive = settings["recursive"]
+        quality = settings["quality"]
+        preserve_structure = settings["preserve_structure"]
+        generate_unique = settings["generate_unique"]
+        verbose = settings["verbose"]
+        selected_files = settings["selected_files"]
+        path = settings["path"]
         console_capture = io.StringIO()
-        if self.selected_files:
-            self.log(self.get_text("converting_selected_files").format(count=len(self.selected_files)))
-            with redirect_stdout(console_capture), redirect_stderr(console_capture):
-                converted = convert_multiple_heic_files(
-                    self.selected_files,
-                    overwrite,
-                    remove,
-                    quality,
-                    target,
-                    self.update_progress,
-                    generate_unique,
-                    verbose
-                )
-            captured = console_capture.getvalue()
-            if captured:
-                self.log(captured)
-            self.log(self.get_text("successfully_converted").format(converted=len(converted), total=len(self.selected_files)))
-            self.status_var.set(self.get_text("converted_files").format(count=len(converted)))
-        else:
-            path = self.path_entry.get()
-            if os.path.isdir(path):
-                self.log(self.get_text("converting_directory").format(path=path, target=target))
+        try:
+            if not os.path.exists(target):
+                os.makedirs(target)
+                self._post("log", self.get_text("created_target_directory").format(path=target))
+            if selected_files:
+                self._post("log", self.get_text("converting_selected_files").format(count=len(selected_files)))
+                with redirect_stdout(console_capture), redirect_stderr(console_capture):
+                    converted = convert_multiple_heic_files(
+                        selected_files,
+                        overwrite,
+                        remove,
+                        quality,
+                        target,
+                        self._worker_progress,
+                        generate_unique,
+                        verbose
+                    )
+                captured = console_capture.getvalue()
+                if captured:
+                    self._post("log", captured)
+                self._post("log", self.get_text("successfully_converted").format(converted=len(converted), total=len(selected_files)))
+                self._post("status", self.get_text("converted_files").format(count=len(converted)))
+            elif os.path.isdir(path):
+                self._post("log", self.get_text("converting_directory").format(path=path, target=target))
                 with redirect_stdout(console_capture), redirect_stderr(console_capture):
                     converted = convert_heic_to_jpeg(
                         path,
@@ -588,20 +637,20 @@ class HEICConverterGUI:
                         quality,
                         target,
                         preserve_structure,
-                        self.update_progress,
+                        self._worker_progress,
                         generate_unique,
                         verbose
                     )
                 captured = console_capture.getvalue()
                 if captured:
-                    self.log(captured)
-                self.log(self.get_text("successfully_converted").format(converted=len(converted), total=len(converted)))
-                self.status_var.set(self.get_text("converted_files").format(count=len(converted)))
+                    self._post("log", captured)
+                self._post("log", self.get_text("successfully_converted").format(converted=len(converted), total=len(converted)))
+                self._post("status", self.get_text("converted_files").format(count=len(converted)))
             elif os.path.isfile(path):
                 t_file = os.path.join(target, get_target_filename(path))
                 if generate_unique and os.path.exists(t_file) and not overwrite:
                     t_file = generate_unique_filename(t_file)
-                self.log(self.get_text("converting_file").format(path=path, target_file=t_file))
+                self._post("log", self.get_text("converting_file").format(path=path, target_file=t_file))
                 with redirect_stdout(console_capture), redirect_stderr(console_capture):
                     success = convert_heic_file(
                         path,
@@ -609,18 +658,23 @@ class HEICConverterGUI:
                         overwrite,
                         remove,
                         quality,
-                        self.update_progress,
+                        self._worker_progress,
                         verbose
                     )
                 captured = console_capture.getvalue()
                 if captured:
-                    self.log(captured)
-                self.log(self.get_text("conversion_successful") if success else self.get_text("conversion_failed"))
-                self.status_var.set(self.get_text("conversion_successful") if success else self.get_text("conversion_failed"))
+                    self._post("log", captured)
+                result = self.get_text("conversion_successful") if success else self.get_text("conversion_failed")
+                self._post("log", result)
+                self._post("status", result)
             else:
-                self.log(self.get_text("invalid_path").format(path=path))
-                self.status_var.set(self.get_text("error_invalid_path"))
-        self.console_output.see(tk.END)
+                self._post("log", self.get_text("invalid_path").format(path=path))
+                self._post("status", self.get_text("error_invalid_path"))
+        except Exception as e:
+            self._post("log", f"Error: {e}")
+            self._post("status", self.get_text("conversion_failed"))
+        finally:
+            self._post("done")
 
 
 def main():
