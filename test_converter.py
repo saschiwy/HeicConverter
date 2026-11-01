@@ -13,7 +13,9 @@ from converter import (
     get_file_list,
     convert_heic_file,
     convert_heic_to_jpeg,
-    convert_multiple_heic_files
+    convert_multiple_heic_files,
+    get_target_filename,
+    is_supported_file
 )
 
 
@@ -73,6 +75,26 @@ class TestConverter(unittest.TestCase):
         pattern_unique = generate_unique_filename(pattern_file)
         self.assertEqual(os.path.basename(pattern_unique), "example(6).jpg")
 
+    def test_get_target_filename(self):
+        """Dots in the filename are kept, only the extension is replaced (issue #29)"""
+        self.assertEqual(get_target_filename("photo.heic"), "photo.jpg")
+        self.assertEqual(get_target_filename("dr. no.heic"), "dr. no.jpg")
+        self.assertEqual(get_target_filename("IMG.2024.01.01.HEIC"), "IMG.2024.01.01.jpg")
+        self.assertEqual(get_target_filename(os.path.join("some.dir", "a.b.heic")), "a.b.jpg")
+
+    @patch('converter.convert_heic_file')
+    def test_convert_multiple_keeps_dots_in_filename(self, mock_convert):
+        """Batch conversion keeps dots in the target filename (issue #29)"""
+        mock_convert.return_value = True
+        dotted = os.path.join(self.test_dir, "dr. no.heic")
+        with open(dotted, 'w') as f:
+            f.write("dummy")
+
+        result = convert_multiple_heic_files([dotted], True, False, 95, self.target_dir)
+
+        self.assertEqual(result, ["dr. no.jpg"])
+        self.assertEqual(mock_convert.call_args[0][1], os.path.join(self.target_dir, "dr. no.jpg"))
+
     def test_get_file_list(self):
         """Test the file list retrieval function"""
         # Test with recursive=True
@@ -96,6 +118,22 @@ class TestConverter(unittest.TestCase):
         invalid_files = get_file_list(os.path.join(self.test_dir, "nonexistent"), True)
         self.assertEqual(len(invalid_files), 0)
 
+    def test_get_file_list_heif(self):
+        """HEIF files and upper-case extensions are found, other files are not"""
+        for name in ("photo.heif", "PHOTO2.HEIC", "notes.txt", "image.jpg"):
+            with open(os.path.join(self.test_dir, name), 'w') as f:
+                f.write("dummy")
+
+        names = sorted(f for _, f in get_file_list(self.test_dir, False))
+        self.assertEqual(names, ["PHOTO2.HEIC", "photo.heif"])
+
+    def test_is_supported_file(self):
+        """Only HEIC and HEIF extensions are accepted"""
+        for name in ("a.heic", "a.HEIC", "a.heif", "a.HeIf", "dr. no.heif"):
+            self.assertTrue(is_supported_file(name), name)
+        for name in ("a.jpg", "a.heic.jpg", "heic", "a.hei"):
+            self.assertFalse(is_supported_file(name), name)
+
     @patch('converter.Image.open')
     @patch('converter.piexif.load')
     @patch('converter.piexif.dump')
@@ -106,6 +144,7 @@ class TestConverter(unittest.TestCase):
         mock_exif = MagicMock()
         mock_exif.items.return_value = [[274, 1]]  # Orientation tag
         mock_image.getexif.return_value = mock_exif
+        mock_image.convert.return_value = mock_image
         mock_image.info = {"exif": b"fake_exif"}
         mock_open.return_value = mock_image
 

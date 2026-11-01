@@ -7,7 +7,8 @@ from converter import (
     convert_heic_to_jpeg,
     convert_heic_file,
     convert_multiple_heic_files,
-    generate_unique_filename
+    generate_unique_filename,
+    get_target_filename
 )
 
 
@@ -17,12 +18,12 @@ def parse_args():
 
     :return: the parsed arguments
     """
-    parser = argparse.ArgumentParser(description='Convert HEIC files to JPEG')
+    parser = argparse.ArgumentParser(description='Convert HEIC/HEIF files to JPEG')
 
     # Input selection options (mutually exclusive)
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument('--path', help='Path to directory or file to convert')
-    input_group.add_argument('--files', nargs='+', help='List of specific HEIC files to convert')
+    input_group.add_argument('--files', nargs='+', help='List of specific HEIC/HEIF files to convert')
 
     # Conversion options
     parser.add_argument('-r', '--remove', help='Remove converted HEIC Files', action='store_true')
@@ -95,7 +96,7 @@ def main():
         )
         print(f'\nSuccessfully converted {len(converted)} files')
     elif os.path.isfile(path):
-        t_file = os.path.join(target, os.path.basename(path).split('.')[0]) + ".jpg"
+        t_file = os.path.join(target, get_target_filename(path))
         if args.unique and os.path.exists(t_file) and not args.overwrite:
             t_file = generate_unique_filename(t_file)
 

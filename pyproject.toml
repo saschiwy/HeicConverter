@@ -1,6 +1,6 @@
 [project]
 name = "heicconverter"
-version = "0.1.0"
+version = "0.5.0"
 description = " A very simple command line tool to convert heic files to jpg"
 readme = "Readme.md"
 license = "MIT"
@@ -18,3 +18,14 @@ dependencies = [
 dev = [
     "pyinstaller>=6.16.0",
 ]
+
+[project.scripts]
+heicconverter = "heicConverter:main"
+heicconverter-gui = "heicConverterGui:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["heicConverter", "heicConverterGui", "converter"]
