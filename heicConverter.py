@@ -1,6 +1,7 @@
 import os
 import argparse
 import re
+import sys
 from typing import List, Optional
 
 from converter import (
@@ -51,6 +52,10 @@ def main():
     # Process file or directory path
     if args.path:
         path = os.path.abspath(args.path)
+
+        if not os.path.exists(path):
+            print(f"Error: path does not exist: {path}", file=sys.stderr)
+            return 2
 
         # Determine target directory
         if args.target:
@@ -111,4 +116,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

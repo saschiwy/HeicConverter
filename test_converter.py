@@ -1,12 +1,16 @@
 import unittest
+import io
 import os
 import shutil
+import sys
 import tempfile
 from unittest.mock import patch, MagicMock
 
 import PIL.Image
 from PIL import Image
 import piexif
+
+from heicConverter import main
 
 from converter import (
     generate_unique_filename,
@@ -249,6 +253,31 @@ class TestConverter(unittest.TestCase):
 
         # Should only find files in the root directory
         self.assertEqual(mock_convert.call_count, 0)  # We mocked get_file_list
+
+
+class TestMain(unittest.TestCase):
+    """Tests for the command line entry point."""
+
+    def setUp(self):
+        """Set up a temporary directory for testing."""
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        """Clean up temporary files and directories."""
+        shutil.rmtree(self.test_dir)
+
+    def test_main_missing_path_is_a_clean_error(self):
+        """A nonexistent --path must be a clean error, not a silent no-op."""
+        missing = os.path.join(self.test_dir, "no-such-dir", "sub")
+        argv = ["heicConverter", "--path", missing, "--skip-prompt"]
+        with patch.object(sys, "argv", argv):
+            with patch("sys.stderr", new_callable=io.StringIO) as err:
+                rc = main()
+        self.assertEqual(rc, 2)
+        self.assertIn("does not exist", err.getvalue())
+        self.assertNotIn("Traceback", err.getvalue())
+        # The missing directory must not be created as a side effect.
+        self.assertFalse(os.path.exists(os.path.join(self.test_dir, "no-such-dir")))
 
 
 if __name__ == '__main__':
